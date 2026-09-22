@@ -10,7 +10,7 @@ The stack is Python, PyTorch and Terraform, and everything runs on AWS.
 
 ## status
 
-The baselines and the first model are in. On held out games the model lands at 0.67 yards of error on the forty frame cut, against 1.61 for the constant velocity baseline. Next up is the AWS pipeline.
+The model now trains in AWS. Five folds run as one pipeline and the held out error averages 0.57 yards on the forty frame cut, against 1.61 for constant velocity. Next up is the prediction API.
 
 ## data
 

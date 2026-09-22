@@ -16,8 +16,8 @@ resource "aws_sfn_state_machine" "pipeline" {
   name     = "keys-pipeline"
   role_arn = aws_iam_role.states.arn
   definition = jsonencode({
-    Comment = "prepare, train five folds, score, publish"
-    StartAt = "Prepare"
+    Comment        = "prepare, train five folds, score, publish"
+    StartAt        = "Prepare"
     TimeoutSeconds = 43200
     States = {
       Prepare = {

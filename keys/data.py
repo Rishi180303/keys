@@ -59,6 +59,9 @@ def validate(inp: pl.DataFrame, out: pl.DataFrame) -> None:
     missing = set(OUTPUT_COLUMNS) - set(out.columns)
     if missing:
         raise ValueError(f"output is missing columns {sorted(missing)}")
+    bad_dir = inp.filter(~pl.col("play_direction").is_in(["left", "right"]))
+    if bad_dir.height:
+        raise ValueError(f"play_direction must be left or right, first {bad_dir.row(0)}")
     frames = inp.group_by(KEY).agg(pl.col("frame_id").min().alias("lo"), pl.col("frame_id").max().alias("hi"), pl.len().alias("n"))
     bad = frames.filter((pl.col("lo") != 1) | (pl.col("hi") != pl.col("n")))
     if bad.height:

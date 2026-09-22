@@ -24,6 +24,17 @@ def test_validate_rejects_frame_gap(synthetic_play):
         data.validate(inp.filter(~((pl.col("nfl_id") == 2) & (pl.col("frame_id") == 5))), out)
 
 
+def test_validate_rejects_bad_play_direction(synthetic_play):
+    inp, out = synthetic_play
+    bad = inp.with_columns(
+        play_direction=pl.when((pl.col("nfl_id") == 1) & (pl.col("frame_id") == 1))
+        .then(pl.lit("up"))
+        .otherwise(pl.col("play_direction"))
+    )
+    with pytest.raises(ValueError, match="play_direction"):
+        data.validate(bad, out)
+
+
 def test_angle_convention_on_fixture(synthetic_play):
     a, b = data.angle_errors(synthetic_play[0])
     assert a < 1e-9 and b > 0.1

@@ -93,7 +93,8 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, lr, total_steps=steps, pct_start=0.1)
     loader = DataLoader(tr, batch_size=batch_size, shuffle=True, collate_fn=tensors.collate)
     best, best_state, bad_epochs, rep = float("inf"), None, 0, {}
-    mlflow.set_tracking_uri("file:mlruns")
+    Path("mlruns").mkdir(exist_ok=True)
+    mlflow.set_tracking_uri("sqlite:///mlruns/mlflow.db")
     mlflow.set_experiment("keys-phase1")
     with mlflow.start_run(run_name=run_name):
         mlflow.log_params({"fold": fold, "weeks": f"{weeks[0]}-{weeks[-1]}", "epochs": epochs, "batch_size": batch_size, "lr": lr,

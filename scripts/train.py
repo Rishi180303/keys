@@ -1,4 +1,5 @@
-"""Train one fold. Usage: uv run python scripts/train.py --weeks 1-18 --fold 0 --epochs 30"""
+"""Train one fold. Usage: uv run python scripts/train.py --weeks 1-18 --fold 0 --epochs 30
+View runs: uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db"""
 
 import argparse
 

@@ -44,7 +44,7 @@ def load_plays(weeks) -> list[dict]:
     cache.mkdir(parents=True, exist_ok=True)
     plays = []
     for w in weeks:
-        f = cache / f"w{w:02d}.pkl"
+        f = cache / f"w{w:02d}_{zlib.crc32(repr((tensors.T, tensors.H, tensors.FEATURES, tensors.N_STATIC)).encode()):08x}.pkl"
         if not f.exists():
             inp, out = data.load_week(w)
             inp = features.normalize(inp)

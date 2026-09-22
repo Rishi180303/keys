@@ -32,6 +32,12 @@ def device() -> torch.device:
     return torch.device("cpu")
 
 
+def ema_avg(avg, cur, n):
+    """EMA with warm-up: decay grows from 0.1 toward 0.999 as updates n accumulate."""
+    decay = torch.clamp((1 + n) / (10 + n), max=0.999)
+    return avg + (cur - avg) * (1 - decay)
+
+
 def load_plays(weeks) -> list[dict]:
     """Build play tensors per week, cached as pickle under data/tensors."""
     cache = Path("data/tensors")
@@ -81,7 +87,7 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
     inp_va, out_va = data.load_weeks(weeks, columns=META_COLUMNS, games=sorted({p["game_id"] for p in va}))
     dev = device()
     model = KeysNet(n_feat=len(tensors.FEATURES), n_static=tensors.N_STATIC).to(dev)
-    ema = torch.optim.swa_utils.AveragedModel(model, multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(0.999))
+    ema = torch.optim.swa_utils.AveragedModel(model, avg_fn=ema_avg)
     opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-2)
     steps = epochs * math.ceil(len(tr) / batch_size)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, lr, total_steps=steps, pct_start=0.1)

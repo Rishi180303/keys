@@ -22,6 +22,7 @@ class KeysNet(nn.Module):
         h = self.conv(feat.reshape(batch * players, frames, n_feat).transpose(1, 2))  # [B*P, d, T]
         m = fmask.reshape(batch * players, 1, frames).to(h.dtype)
         pooled = (h * m).sum(-1) / m.sum(-1).clamp(min=1.0)  # masked mean over time
+        # h[:, :, -1] is each player's last real frame only because build_play right-aligns feat
         h = (pooled + h[:, :, -1]).reshape(batch, players, -1) + self.static(static)
         h = self.encoder(h, src_key_padding_mask=~pmask)
         out = self.head(h).reshape(batch, players, self.horizon, 4)

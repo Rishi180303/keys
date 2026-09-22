@@ -92,7 +92,7 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
     steps = epochs * math.ceil(len(tr) / batch_size)
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, lr, total_steps=steps, pct_start=0.1)
     loader = DataLoader(tr, batch_size=batch_size, shuffle=True, collate_fn=tensors.collate)
-    best, best_state, bad_epochs, rep = float("inf"), None, 0, {}
+    best, best_state, best_rep, bad_epochs, rep = float("inf"), None, {}, 0, {}
     Path("mlruns").mkdir(exist_ok=True)
     mlflow.set_tracking_uri("sqlite:///mlruns/mlflow.db")
     mlflow.set_experiment("keys-phase1")
@@ -122,6 +122,7 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
             if rep["le40"] < best:
                 best, bad_epochs = rep["le40"], 0
                 best_state = {k: v.detach().cpu().clone() for k, v in ema.module.state_dict().items()}
+                best_rep = rep
             else:
                 bad_epochs += 1
             if bad_epochs >= 5:
@@ -130,4 +131,4 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
         torch.save(best_state, f"models/fold{fold}.pt")
         mlflow.log_artifact(f"models/fold{fold}.pt")
         mlflow.log_metric("best_le40", best)
-    return rep
+    return best_rep

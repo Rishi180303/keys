@@ -42,3 +42,7 @@ dist/
 # process files, kept local only
 docs/superpowers/
 .superpowers/
+
+# local process files for claude sessions, never pushed
+handoff.md
+CLAUDE.md

@@ -92,10 +92,10 @@ def load_weeks(weeks, columns=None, games=None) -> tuple[pl.DataFrame, pl.DataFr
     for w in weeks:
         i = pl.scan_parquet(PROCESSED / f"input_w{w:02d}.parquet")
         o = pl.scan_parquet(PROCESSED / f"output_w{w:02d}.parquet")
-        if columns is not None:
-            i = i.select(columns)
         if games is not None:
             i, o = i.filter(pl.col("game_id").is_in(games)), o.filter(pl.col("game_id").is_in(games))
+        if columns is not None:
+            i = i.select(columns)
         inps.append(i.collect())
         outs.append(o.collect())
     return pl.concat(inps), pl.concat(outs)

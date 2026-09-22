@@ -39,3 +39,15 @@ def test_week_one_passes_validation():
     assert inp["player_to_predict"].dtype == pl.Boolean
     a, b = data.angle_errors(inp)
     assert a < 0.05 and b > 0.5
+
+
+def test_load_weeks_columns_and_games(synthetic_play, monkeypatch, tmp_path):
+    inp, out = synthetic_play
+    monkeypatch.setattr(data, "PROCESSED", tmp_path)
+    inp.write_parquet(tmp_path / "input_w01.parquet")
+    out.write_parquet(tmp_path / "output_w01.parquet")
+    i, o = data.load_weeks([1], columns=["x", "y"], games=[1])
+    assert list(i.columns) == ["x", "y"] and i.height == 36
+    assert o.height == 12
+    i_empty, o_empty = data.load_weeks([1], columns=["x", "y"], games=[999])
+    assert i_empty.height == 0 and o_empty.height == 0

@@ -38,3 +38,7 @@ dist/
 
 # mac
 .DS_Store
+
+# process files, kept local only
+docs/superpowers/
+.superpowers/

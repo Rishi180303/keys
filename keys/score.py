@@ -40,4 +40,6 @@ def score(checkpoints: dict[int, Path], weeks) -> pl.DataFrame:
             rep = metric.evaluate_predictions(pred, *targets)
             print(f"fold {fold}: {len(mine)} plays, le40 {rep['le40']:.4f}, all {rep['all']:.4f}")
         frames.append(pred)
+    if not frames:
+        raise ValueError("no play matched any checkpoint fold")
     return pl.concat(frames)

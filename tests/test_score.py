@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from keys import score, tensors, train
@@ -17,3 +18,12 @@ def test_each_play_is_scored_by_its_own_fold(synthetic_play, tmp_path, monkeypat
     df = score.score({k: ckpt, (k + 1) % 5: ckpt}, [1])
     assert df.height == 12 and df["fold"].unique().to_list() == [k]
     assert set(df.columns) >= {"x_pred", "y_pred", "sd_x", "sd_y", "fold"}
+
+
+def test_score_raises_when_no_plays_match(synthetic_play, monkeypatch):
+    inp, _out = synthetic_play
+    plays = tensors.build_plays(normalize(inp), None)
+    monkeypatch.setattr(train, "load_plays", lambda weeks: plays)
+    monkeypatch.setattr(score, "_targets", lambda weeks, games: None)
+    with pytest.raises(ValueError, match="no play matched"):
+        score.score({}, [1])

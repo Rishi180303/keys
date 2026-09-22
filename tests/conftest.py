@@ -1,9 +1,31 @@
+import importlib
 import math
 
 import polars as pl
 import pytest
 
 FRAMES_IN, FRAMES_OUT = 12, 6
+
+
+def reload_roots():
+    """Re-read KEYS_RAW, KEYS_DATA and KEYS_MODELS from the environment in every module that captured them."""
+    from keys import data, paths, train
+
+    for module in (paths, data, train):
+        importlib.reload(module)
+
+
+@pytest.fixture
+def roots(tmp_path, monkeypatch):
+    """Point the data and model roots at a temp folder for one test, with no bucket variables set."""
+    monkeypatch.setenv("KEYS_DATA", str(tmp_path / "data"))
+    monkeypatch.setenv("KEYS_MODELS", str(tmp_path / "models"))
+    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN"):
+        monkeypatch.delenv(name, raising=False)
+    reload_roots()
+    yield tmp_path
+    monkeypatch.undo()
+    reload_roots()
 
 
 def _rows(nfl_id, name, pos, side, role, predict, x0, y0, s, direction):

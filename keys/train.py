@@ -1,12 +1,12 @@
 """Game grouped folds, training loop, prediction in field coordinates."""
 
+import json
 import math
+import os
 import pickle
 import random
 import zlib
-from pathlib import Path
 
-import mlflow
 import numpy as np
 import polars as pl
 import torch
@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 
 from keys import data, features, metric, tensors
 from keys.model import KeysNet, gaussian_nll
+from keys.paths import DATA, MODELS
 
 N_FOLDS = 5
 META_COLUMNS = data.KEY + ["player_role", "num_frames_output"]
@@ -40,7 +41,7 @@ def ema_avg(avg, cur, n):
 
 def load_plays(weeks) -> list[dict]:
     """Build play tensors per week, cached as pickle under data/tensors."""
-    cache = Path("data/tensors")
+    cache = DATA / "tensors"
     cache.mkdir(parents=True, exist_ok=True)
     plays = []
     for w in weeks:
@@ -67,20 +68,23 @@ def predict(model, plays: list[dict], dev: torch.device, batch_size: int = 64) -
     with torch.no_grad():
         for i in range(0, len(plays), batch_size):
             b = tensors.collate(plays[i : i + batch_size])
-            mean, _ = model(b["feat"].to(dev), b["fmask"].to(dev), b["static"].to(dev), b["pmask"].to(dev))
+            mean, logvar = model(b["feat"].to(dev), b["fmask"].to(dev), b["static"].to(dev), b["pmask"].to(dev))
             mean = mean.cpu().numpy()
+            sd = torch.exp(0.5 * logvar).cpu().numpy()
             for j, p in enumerate(b["plays"]):
                 for s in np.flatnonzero(p["static"][:, tensors.I_PREDICTED]):
                     for k in range(1, p["nfo"] + 1):
                         d = mean[j, s, min(k, tensors.H) - 1]  # past the horizon, hold the last prediction
                         x, y = p["last_xy"][s] + d
-                        rows.append((p["game_id"], p["play_id"], int(p["nfl_id"][s]), k, float(x), float(y), p["is_left"]))
-    df = pl.DataFrame(rows, schema=data.KEY + ["frame_id", "x_pred", "y_pred", "is_left"], orient="row")
+                        rows.append((p["game_id"], p["play_id"], int(p["nfl_id"][s]), k, float(x), float(y), float(sd[j, s, min(k, tensors.H) - 1, 0]), float(sd[j, s, min(k, tensors.H) - 1, 1]), p["is_left"]))
+    df = pl.DataFrame(rows, schema=data.KEY + ["frame_id", "x_pred", "y_pred", "sd_x", "sd_y", "is_left"], orient="row")
     df = df.with_columns(play_direction=pl.when(pl.col("is_left")).then(pl.lit("left")).otherwise(pl.lit("right")))
     return features.denormalize(df).drop("is_left", "play_direction")
 
 
 def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 1e-3, run_name: str | None = None) -> dict:
+    import mlflow
+
     plays = load_plays(weeks)
     tr = [p for p in plays if fold_of(p["game_id"]) != fold]
     va = [p for p in plays if fold_of(p["game_id"]) == fold]
@@ -93,8 +97,12 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, lr, total_steps=steps, pct_start=0.1)
     loader = DataLoader(tr, batch_size=batch_size, shuffle=True, collate_fn=tensors.collate)
     best, best_state, best_rep, bad_epochs, rep = float("inf"), None, {}, 0, {}
-    Path("mlruns").mkdir(exist_ok=True)
-    mlflow.set_tracking_uri("sqlite:///mlruns/mlflow.db")
+    from pathlib import Path
+
+    uri = os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///mlruns/mlflow.db")
+    if uri.startswith("sqlite:///mlruns"):
+        Path("mlruns").mkdir(exist_ok=True)
+    mlflow.set_tracking_uri(uri)
     mlflow.set_experiment("keys-phase1")
     with mlflow.start_run(run_name=run_name):
         mlflow.log_params({"fold": fold, "weeks": f"{weeks[0]}-{weeks[-1]}", "epochs": epochs, "batch_size": batch_size, "lr": lr,
@@ -127,8 +135,9 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
                 bad_epochs += 1
             if bad_epochs >= 5:
                 break
-        Path("models").mkdir(exist_ok=True)
-        torch.save(best_state, f"models/fold{fold}.pt")
-        mlflow.log_artifact(f"models/fold{fold}.pt")
+        MODELS.mkdir(parents=True, exist_ok=True)
+        torch.save(best_state, MODELS / f"fold{fold}.pt")
+        (MODELS / f"fold{fold}.json").write_text(json.dumps(best_rep))
+        mlflow.log_artifact(str(MODELS / f"fold{fold}.pt"))
         mlflow.log_metric("best_le40", best)
     return best_rep

@@ -1,14 +1,12 @@
 """Raw csv to validated parquet, and loading."""
 
-from pathlib import Path
-
 import numpy as np
 import polars as pl
 
 from keys import KEY
+from keys.paths import DATA, RAW
 
-RAW = Path("nfl-big-data-bowl-2026-prediction/train")
-PROCESSED = Path("data/processed")
+PROCESSED = DATA / "processed"
 INPUT_COLUMNS = [
     "game_id", "play_id", "player_to_predict", "nfl_id", "frame_id", "play_direction",
     "absolute_yardline_number", "player_name", "player_height", "player_weight", "player_birth_date",

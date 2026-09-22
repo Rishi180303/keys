@@ -64,3 +64,10 @@ def test_ema_warmup_schedule():
     late = ema_avg(avg, cur, torch.tensor(100000))
     assert torch.allclose(early, torch.full((3,), 0.9))
     assert torch.allclose(late, torch.full((3,), 0.001), atol=1e-6)
+
+
+def test_predict_reports_spread(synthetic_play):
+    inp, _ = synthetic_play
+    plays = tensors.build_plays(normalize(inp), None)
+    pred = predict(ZeroDisplacement(), plays, torch.device("cpu"))
+    assert pred["sd_x"].to_list() == [1.0] * 12 and pred["sd_y"].to_list() == [1.0] * 12

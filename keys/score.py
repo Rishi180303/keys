@@ -8,8 +8,6 @@ import torch
 from keys import data, metric, tensors, train
 from keys.model import KeysNet
 
-META = data.KEY + ["player_role", "num_frames_output"]
-
 
 def _model(path: Path) -> KeysNet:
     model = KeysNet(n_feat=len(tensors.FEATURES), n_static=tensors.N_STATIC)
@@ -20,7 +18,7 @@ def _model(path: Path) -> KeysNet:
 def _targets(weeks, games):
     """Input meta and output frames for these games, or None when the parquet is not there."""
     try:
-        return data.load_weeks(weeks, columns=META, games=games)
+        return data.load_weeks(weeks, columns=train.META_COLUMNS, games=games)
     except FileNotFoundError:
         return None
 

@@ -7,7 +7,7 @@ RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev --no-ins
 COPY keys ./keys
 COPY scripts ./scripts
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev
-ENV PATH="/app/.venv/bin:$PATH" KEYS_RAW=/work/raw KEYS_DATA=/work/data KEYS_MODELS=/work/models
+ENV PATH="/app/.venv/bin:$PATH" KEYS_RAW=/work/raw KEYS_DATA=/work/data KEYS_MODELS=/work/models PYTHONUNBUFFERED=1 GIT_PYTHON_REFRESH=quiet
 RUN mkdir -p /work/raw /work/data /work/models
 ENTRYPOINT ["python", "scripts/job.py"]
 

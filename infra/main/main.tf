@@ -25,6 +25,10 @@ data "aws_subnets" "default" {
     name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
+  filter {
+    name   = "availability-zone-id"
+    values = ["use1-az1", "use1-az2", "use1-az4", "use1-az5", "use1-az6"]
+  }
 }
 
 locals {

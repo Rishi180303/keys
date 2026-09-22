@@ -19,10 +19,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
   bucket     = aws_s3_bucket.artifacts.id
   depends_on = [aws_s3_bucket_versioning.artifacts]
   rule {
-    id     = "expire-old-runs"
+    id     = "expire-old-versions"
     status = "Enabled"
     filter {}
-    expiration { days = 90 }
     noncurrent_version_expiration { noncurrent_days = 30 }
   }
 }

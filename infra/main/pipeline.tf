@@ -18,6 +18,7 @@ resource "aws_sfn_state_machine" "pipeline" {
   definition = jsonencode({
     Comment = "prepare, train five folds, score, publish"
     StartAt = "Prepare"
+    TimeoutSeconds = 43200
     States = {
       Prepare = {
         Type       = "Task"
@@ -35,7 +36,7 @@ resource "aws_sfn_state_machine" "pipeline" {
       Train = {
         Type           = "Map"
         ItemsPath      = "$.folds"
-        MaxConcurrency = 1
+        MaxConcurrency = 5
         ResultPath     = null
         ItemSelector = {
           "fold.$"   = "$$.Map.Item.Value"

@@ -6,6 +6,7 @@ import os
 import pickle
 import random
 import zlib
+from pathlib import Path
 
 import numpy as np
 import polars as pl
@@ -97,7 +98,6 @@ def train(weeks, fold: int, epochs: int = 30, batch_size: int = 64, lr: float = 
     sched = torch.optim.lr_scheduler.OneCycleLR(opt, lr, total_steps=steps, pct_start=0.1)
     loader = DataLoader(tr, batch_size=batch_size, shuffle=True, collate_fn=tensors.collate)
     best, best_state, best_rep, bad_epochs, rep = float("inf"), None, {}, 0, {}
-    from pathlib import Path
 
     uri = os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///mlruns/mlflow.db")
     if uri.startswith("sqlite:///mlruns"):

@@ -1,0 +1,40 @@
+# kaggle data, about 1.6 gb, download separately
+nfl-big-data-bowl-2026-prediction/
+114239_nfl_competition_files_published_analytics_final/
+data/
+*.csv
+*.parquet
+
+# local working rules, never pushed
+rules.md
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# secrets
+.env
+.env.*
+*.pem
+
+# models and experiment tracking
+models/
+mlruns/
+*.pt
+*.pth
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# site
+node_modules/
+dist/
+
+# mac
+.DS_Store

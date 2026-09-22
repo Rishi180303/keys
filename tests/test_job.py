@@ -2,6 +2,7 @@ import json
 import runpy
 import sys
 
+import pytest
 import torch
 
 from keys import tensors
@@ -32,3 +33,10 @@ def test_local_score_and_publish(roots, monkeypatch, synthetic_play):
     _run("publish", monkeypatch)
     summary = json.loads((models / "summary.json").read_text())
     assert summary["le40"]["folds"] == 5 and abs(summary["le40"]["mean"] - 0.7) < 1e-9
+
+
+def test_publish_no_reports(roots, monkeypatch):
+    monkeypatch.setenv("KEYS_WEEKS", "1")
+    (roots / "models" / "local").mkdir(parents=True)
+    with pytest.raises(FileNotFoundError, match="no report.json"):
+        _run("publish", monkeypatch)

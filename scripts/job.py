@@ -64,6 +64,8 @@ def stage_publish():
         summary = publish.publish(RUN, ART_BUCKET, boto3.client("s3"), boto3.client("ssm"), paths.MODELS / "publish")
     else:
         reports = [json.loads(p.read_text()) for p in sorted((paths.MODELS / RUN).glob("fold*/report.json"))]
+        if not reports:
+            raise FileNotFoundError(f"no report.json under {paths.MODELS / RUN}")
         summary = publish.summarize(reports)
         (paths.MODELS / "summary.json").write_text(json.dumps(summary, indent=2))
     print("summary", json.dumps(summary))

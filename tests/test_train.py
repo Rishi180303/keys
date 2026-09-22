@@ -1,3 +1,4 @@
+import polars as pl
 import torch
 
 from keys import tensors
@@ -5,6 +6,14 @@ from keys.features import normalize, normalize_targets
 from keys.metric import evaluate_predictions
 from keys.model import KeysNet
 from keys.train import N_FOLDS, ema_avg, fold_of, mirror, predict
+
+
+class ZeroDisplacement(torch.nn.Module):
+    """Predicts no movement at all: mean and logvar both zero."""
+
+    def forward(self, feat, fmask, static, pmask):
+        shape = (*pmask.shape, tensors.H, 2)
+        return torch.zeros(shape), torch.zeros(shape)
 
 
 def test_fold_is_stable_and_balanced():
@@ -33,6 +42,20 @@ def test_predict_covers_every_target_row(synthetic_play):
     assert pred.height == 12 and pred["frame_id"].max() == 6
     report = evaluate_predictions(pred, inp, out)
     assert "all" in report
+
+
+def test_predict_on_left_play(synthetic_play):
+    """A zero displacement model's prediction, denormalized, must land back on the raw last input position."""
+    inp, _ = synthetic_play
+    inp = inp.with_columns(play_direction=pl.lit("left"))
+    plays = tensors.build_plays(normalize(inp), None)
+    assert plays[0]["is_left"]
+    pred = predict(ZeroDisplacement(), plays, torch.device("cpu"))
+    last = inp.sort("frame_id").group_by("nfl_id").last().select("nfl_id", "x", "y")
+    chk = pred.filter(pl.col("frame_id") == 1).join(last, on="nfl_id")
+    assert chk.height == 2
+    assert (chk["x_pred"] - chk["x"]).abs().max() < 1e-4
+    assert (chk["y_pred"] - chk["y"]).abs().max() < 1e-4
 
 
 def test_ema_warmup_schedule():

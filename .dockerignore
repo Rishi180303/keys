@@ -1,0 +1,11 @@
+.venv
+.git
+data
+models
+mlruns
+nfl-big-data-bowl-2026-prediction
+114239_nfl_competition_files_published_analytics_final
+docs
+.superpowers
+infra
+**/__pycache__

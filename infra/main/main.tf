@@ -1,0 +1,39 @@
+terraform {
+  required_version = ">= 1.10"
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 6.0" }
+  }
+  backend "s3" {
+    bucket       = "keys-tfstate-266380778582"
+    key          = "main.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+  }
+}
+
+provider "aws" {
+  region = var.region
+}
+
+variable "region" { default = "us-east-1" }
+variable "image_tag" { description = "git sha the images are tagged with" }
+
+data "aws_caller_identity" "me" {}
+data "aws_vpc" "default" { default = true }
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+locals {
+  account = data.aws_caller_identity.me.account_id
+  data_b  = "keys-data-${local.account}"
+  art_b   = "keys-artifacts-${local.account}"
+  image   = "${aws_ecr_repository.keys.repository_url}:${var.image_tag}"
+  job_env = [
+    { name = "KEYS_DATA_BUCKET", value = local.data_b },
+    { name = "KEYS_ARTIFACTS_BUCKET", value = local.art_b },
+  ]
+}

@@ -22,7 +22,7 @@ def last_frame(inp: pl.DataFrame) -> pl.DataFrame:
 
 def _frames(last: pl.DataFrame) -> pl.DataFrame:
     """Expand each player to one row per future frame k = 1..num_frames_output."""
-    return last.drop("frame_id").with_columns(frame_id=pl.int_ranges(1, pl.col("num_frames_output") + 1)).explode("frame_id")
+    return last.drop("frame_id").with_columns(frame_id=pl.int_ranges(1, pl.col("num_frames_output") + 1)).explode("frame_id", empty_as_null=False)
 
 
 def _cv(axis: str) -> pl.Expr:

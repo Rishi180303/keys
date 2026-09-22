@@ -1,5 +1,6 @@
 import importlib
 import math
+from pathlib import Path
 
 import polars as pl
 import pytest
@@ -66,3 +67,32 @@ def synthetic_play():
                  "x": last["x"] + vx * 0.1 * k, "y": last["y"] + vy * 0.1 * k}
             )
     return inp, pl.DataFrame(out_rows)
+
+
+class FakeS3:
+    """Enough of a boto3 S3 client for pull, push and push_file: an in-memory bucket."""
+
+    def __init__(self):
+        self.store = {}
+
+    def get_paginator(self, name):
+        assert name == "list_objects_v2"
+        store = self.store
+
+        class Paginator:
+            def paginate(self, Bucket, Prefix):
+                keys = sorted(k for (b, k) in store if b == Bucket and k.startswith(Prefix))
+                yield {"Contents": [{"Key": k} for k in keys]}
+
+        return Paginator()
+
+    def download_file(self, Bucket, Key, Filename):
+        Path(Filename).write_bytes(self.store[(Bucket, Key)])
+
+    def upload_file(self, Filename, Bucket, Key):
+        self.store[(Bucket, Key)] = Path(Filename).read_bytes()
+
+
+@pytest.fixture
+def fake_s3():
+    return FakeS3()

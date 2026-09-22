@@ -2,7 +2,7 @@
 name = "keys"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
-dependencies = ["polars>=1.0", "numpy>=2.0", "torch>=2.5", "mlflow>=2.15"]
+dependencies = ["polars>=1.0", "numpy>=2.0", "torch>=2.5", "mlflow>=2.15", "boto3>=1.35"]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6"]

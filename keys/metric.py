@@ -30,10 +30,21 @@ def report(df: pl.DataFrame) -> dict[str, float]:
 def evaluate_predictions(pred: pl.DataFrame, inp: pl.DataFrame, out: pl.DataFrame) -> dict[str, float]:
     """Join x_pred, y_pred onto every target row and report. Fails if any target row has no prediction."""
     meta = inp.select(KEY + ["player_role", "num_frames_output"]).unique(subset=KEY)
-    df = out.join(pred.select(KEY + ["frame_id", "x_pred", "y_pred"]), on=KEY + ["frame_id"], how="inner")
-    df = df.join(meta, on=KEY, how="left")
+    pred_select = pred.select(KEY + ["frame_id", "x_pred", "y_pred"])
+
+    # Check for missing predictions using anti-join
+    missing = out.join(pred_select, on=KEY + ["frame_id"], how="anti")
+    if missing.height > 0:
+        raise ValueError(f"{missing.height} target rows have no predictions")
+
+    # Perform the join
+    df = out.join(pred_select, on=KEY + ["frame_id"], how="inner")
+
+    # Check for duplicate predictions
     if df.height != out.height:
         raise ValueError(f"predictions cover {df.height} of {out.height} target rows")
+
+    df = df.join(meta, on=KEY, how="left")
     return report(df)
 
 

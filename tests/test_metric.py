@@ -1,4 +1,5 @@
 import polars as pl
+import pytest
 
 from keys.metric import evaluate_predictions, kaggle_rmse, markdown_table, report
 
@@ -30,3 +31,21 @@ def test_evaluate_predictions_joins_on_frame(synthetic_play):
 def test_markdown_table_has_columns():
     text = markdown_table({"hold": {"all": 4.1, "le40": 4.0}, "model": {"all": 0.5, "le40": 0.49}})
     assert "| cut | hold | model |" in text and "| le40 | 4.000 | 0.490 |" in text
+
+
+def test_evaluate_predictions_missing_row(synthetic_play):
+    inp, out = synthetic_play
+    pred = out.rename({"x": "x_pred", "y": "y_pred"})
+    # Drop the first row to have a missing prediction
+    pred = pred[1:]
+    with pytest.raises(ValueError, match="target rows have no predictions"):
+        evaluate_predictions(pred, inp, out)
+
+
+def test_evaluate_predictions_duplicate_row(synthetic_play):
+    inp, out = synthetic_play
+    pred = out.rename({"x": "x_pred", "y": "y_pred"})
+    # Duplicate the first row to have a duplicate prediction
+    pred = pl.concat([pred, pred[:1]])
+    with pytest.raises(ValueError, match="predictions cover"):
+        evaluate_predictions(pred, inp, out)

@@ -17,6 +17,11 @@ provider "aws" {
 
 variable "region" { default = "us-east-1" }
 variable "image_tag" { description = "git sha the images are tagged with" }
+variable "alarm_email" {
+  description = "where alarm emails go, set in the gitignored terraform.tfvars"
+  type        = string
+  sensitive   = true
+}
 
 data "aws_caller_identity" "me" {}
 data "aws_vpc" "default" { default = true }

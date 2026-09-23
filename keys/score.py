@@ -9,7 +9,8 @@ from keys import data, metric, tensors, train
 from keys.model import KeysNet
 
 
-def _model(path: Path) -> KeysNet:
+def load_model(path: Path) -> KeysNet:
+    """A KeysNet with the default sizes and the weights of one checkpoint, on the CPU."""
     model = KeysNet(n_feat=len(tensors.FEATURES), n_static=tensors.N_STATIC)
     model.load_state_dict(torch.load(path, map_location="cpu"))
     return model
@@ -31,7 +32,7 @@ def score(checkpoints: dict[int, Path], weeks) -> pl.DataFrame:
         mine = [p for p in plays if train.fold_of(p["game_id"]) == fold]
         if not mine:
             continue
-        pred = train.predict(_model(path).to(dev), mine, dev).with_columns(fold=pl.lit(fold, dtype=pl.Int64))
+        pred = train.predict(load_model(path).to(dev), mine, dev).with_columns(fold=pl.lit(fold, dtype=pl.Int64))
         games = sorted({p["game_id"] for p in mine})
         targets = _targets(weeks, games)
         if targets is not None:

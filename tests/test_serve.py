@@ -91,3 +91,53 @@ def test_model_failure_is_a_500_with_the_request_id(synthetic_play, monkeypatch)
     inp, _ = synthetic_play
     status, body = _call(_event(inp.to_dicts()))
     assert status == 500 and body == {"error": "internal error", "request_id": "req-1"}
+
+
+def test_nested_body_is_a_400(model):
+    status, body = _call({"body": "[" * 100000, "isBase64Encoded": False})
+    assert status == 400 and "could not read the request" in body["error"]
+
+
+@pytest.mark.parametrize(
+    ("column", "value", "named"),
+    [
+        ("player_role", "Kicker", "player_role"),
+        ("player_height", "tall", "player_height"),
+        ("play_direction", "up", "play_direction"),
+        ("num_frames_output", 500, "num_frames_output"),
+        ("x", float("nan"), "'x'"),
+        ("x", float("inf"), "'x'"),
+    ],
+)
+def test_bad_value_is_a_400_that_names_it(synthetic_play, model, column, value, named):
+    inp, _ = synthetic_play
+    status, body = _call(_event([{**r, column: value} for r in inp.to_dicts()]))
+    assert status == 400 and named in body["error"]
+
+
+def test_overflowing_number_is_a_400(synthetic_play, model):
+    inp, _ = synthetic_play
+    text = json.dumps({"rows": [{**r, "x": 123456.0} for r in inp.to_dicts()]}).replace("123456.0", "1e400")
+    status, body = _call({"body": text, "isBase64Encoded": False})
+    assert status == 400 and "'x'" in body["error"]
+
+
+def test_too_many_players_is_a_400(synthetic_play, model):
+    inp, _ = synthetic_play
+    many = pl.concat([inp.with_columns(nfl_id=pl.col("nfl_id") + 10 * i) for i in range(11)])
+    status, body = _call(_event(many.to_dicts()))
+    assert status == 400 and "at most 30 players" in body["error"]
+
+
+def test_warm_ping_drops_a_model_that_is_no_longer_published(monkeypatch):
+    monkeypatch.setattr(serve, "_cache", {"model": "old", "version": "models/old/fold0/model.pt"})
+    monkeypatch.setattr(serve, "published", lambda: "models/new/fold0/model.pt")
+    assert serve.handler({"warm": True}, CTX) == {"statusCode": 204}
+    assert serve._cache == {}
+
+
+def test_warm_ping_keeps_the_current_model(monkeypatch):
+    monkeypatch.setattr(serve, "_cache", {"model": "current", "version": "models/new/fold0/model.pt"})
+    monkeypatch.setattr(serve, "published", lambda: "models/new/fold0/model.pt")
+    assert serve.handler({"warm": True}, CTX) == {"statusCode": 204}
+    assert serve._cache["model"] == "current"

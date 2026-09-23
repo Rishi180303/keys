@@ -35,12 +35,20 @@ resource "aws_ecr_repository" "keys" {
 resource "aws_ecr_lifecycle_policy" "keys" {
   repository = aws_ecr_repository.keys.name
   policy = jsonencode({
-    rules = [{
-      rulePriority = 1
-      description  = "keep the last ten images"
-      selection    = { tagStatus = "any", countType = "imageCountMoreThan", countNumber = 10 }
-      action       = { type = "expire" }
-    }]
+    rules = [
+      {
+        rulePriority = 1
+        description  = "drop untagged images after a day"
+        selection    = { tagStatus = "untagged", countType = "sinceImagePushed", countUnit = "days", countNumber = 1 }
+        action       = { type = "expire" }
+      },
+      {
+        rulePriority = 2
+        description  = "keep the last twenty images, ten pushes of train and serve"
+        selection    = { tagStatus = "any", countType = "imageCountMoreThan", countNumber = 20 }
+        action       = { type = "expire" }
+      },
+    ]
   })
 }
 

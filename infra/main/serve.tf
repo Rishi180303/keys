@@ -121,8 +121,9 @@ resource "aws_lambda_permission" "api" {
   source_arn    = "${aws_apigatewayv2_api.keys.execution_arn}/*/*/predict"
 }
 
-# a direct ping every five minutes keeps one environment and lambda's copy of the 3 GB image warm. with a cold
-# image cache the first requests after a deploy took 25 to 35 seconds to start, past the api's 30 second limit
+# a direct ping every five minutes keeps one environment and lambda's copy of the 3 GB image warm, and the handler
+# uses it to drop its cached model once a newer run is published. with a cold image cache the first requests after
+# a deploy took 25 to 35 seconds to start, past the api's 30 second limit; with the image cached, about 7.5 seconds
 resource "aws_cloudwatch_event_rule" "warm" {
   name                = "keys-predict-warm"
   schedule_expression = "rate(5 minutes)"

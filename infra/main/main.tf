@@ -21,6 +21,10 @@ variable "alarm_email" {
   description = "where alarm emails go, set in the gitignored terraform.tfvars"
   type        = string
   sensitive   = true
+  validation {
+    condition     = strcontains(var.alarm_email, "@")
+    error_message = "alarm_email must be an email address: set it in terraform.tfvars, or TF_VAR_alarm_email in CI."
+  }
 }
 
 data "aws_caller_identity" "me" {}

@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+
+  images:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: build the train and serve images
+        run: |
+          docker build --provenance=false --target train -t keys:train .
+          docker build --provenance=false --target serve -t keys:serve .
+      - name: sign in to aws as the deploy role
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: sign in to ecr
+        if: github.event_name == 'push'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: push both images tagged with the commit
+        if: github.event_name == 'push'
+        env:
+          REPOSITORY: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}
+        run: |
+          for target in train serve; do
+            docker tag "keys:$target" "$REPOSITORY:${GITHUB_SHA::7}-$target"
+            docker push "$REPOSITORY:${GITHUB_SHA::7}-$target"
+          done
+
+  plan:
+    if: github.event_name == 'push'
+    needs: images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.1
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive infra
+      - run: terraform -chdir=infra/main init -input=false
+      - run: terraform -chdir=infra/main validate
+      - name: plan what applying this commit's images would change
+        env:
+          TF_VAR_alarm_email: ${{ secrets.ALARM_EMAIL }}
+        run: terraform -chdir=infra/main plan -input=false -lock-timeout=120s -var "image_tag=${GITHUB_SHA::7}"

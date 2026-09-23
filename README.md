@@ -10,7 +10,15 @@ The stack is Python, PyTorch and Terraform, and everything runs on AWS.
 
 ## status
 
-The model now trains in AWS. Five folds run as one pipeline and the held out error averages 0.57 yards on the forty frame cut, against 1.61 for constant velocity. Next up is the prediction API.
+The model trains in AWS and now answers requests through a small web API. Five folds run as one pipeline and the held out error averages 0.57 yards on the forty frame cut, against 1.61 for constant velocity. Next up is the defender rating.
+
+## api
+
+The API takes one play and returns a predicted path for every player the play flags, one point per frame until the ball lands, each with a spread in yards.
+
+Send a POST to /predict with a JSON body of the form {"rows": [...]}. Each row is one player at one frame before the throw, with the same 23 columns as the Kaggle input files. The reply names the model and holds one entry per predicted player and frame: nfl_id, frame_id, x, y, sd_x and sd_y. A request the API cannot use gets a 400 and a short message saying what is wrong.
+
+The address is not public yet. The website will use it once it exists.
 
 ## data
 

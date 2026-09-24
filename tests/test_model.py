@@ -35,7 +35,7 @@ def test_model_overfits_one_batch(synthetic_play):
     torch.manual_seed(0)
     b = _batch(synthetic_play)
     model = KeysNet(n_feat=len(tensors.FEATURES), n_static=tensors.N_STATIC, d=32, layers=1, heads=2)
-    opt = torch.optim.Adam(model.parameters(), lr=1e-2)
+    opt = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     def step():
         mean, logvar = model(b["feat"], b["fmask"], b["static"], b["pmask"])

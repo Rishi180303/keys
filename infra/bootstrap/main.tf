@@ -10,7 +10,9 @@ provider "aws" {
 }
 
 variable "region" { default = "us-east-1" }
-variable "repo" { default = "Rishi180303/keys" }
+# github puts the immutable owner and repository ids in the oidc subject, repo:<owner>@<id>/<repo>@<id>:ref:...,
+# so a different repository that later takes the same name can never assume the deploy role
+variable "repo" { default = "Rishi180303@100612124/keys@1367875543" }
 
 data "aws_caller_identity" "me" {}
 

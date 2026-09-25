@@ -136,3 +136,16 @@ class FakeS3:
 @pytest.fixture
 def fake_s3():
     return FakeS3()
+
+
+@pytest.fixture
+def supplementary_csv(tmp_path):
+    """The one play of rating_play in the raw supplementary format."""
+    header = (
+        "game_id,play_id,week,home_team_abbr,visitor_team_abbr,possession_team,defensive_team,play_description,quarter,"
+        "game_clock,down,yards_to_go,pass_result,route_of_targeted_receiver,team_coverage_man_zone,team_coverage_type,"
+        "expected_points_added"
+    )
+    path = tmp_path / "supplementary_data.csv"
+    path.write_text(header + "\n1,1,1,KC,DET,DET,KC,pass,1,15:00,1,10,C,GO,ZONE_COVERAGE,COVER_3_ZONE,0.5\n")
+    return path

@@ -116,3 +116,26 @@ def play_table(inp: pl.DataFrame, out: pl.DataFrame, pred: pl.DataFrame, sup: pl
         "air", "role", "start", "d0", "dexp", "dact", "yards", "sdu", "z", "ex", "fold",
     ]
     return d.select(keep).rename({"player_name": "name", "player_position": "pos", "num_frames_output": "frames"}).sort(KEY)
+
+
+def _center_pass(df: pl.DataFrame, cells: list[str]) -> pl.DataFrame:
+    """Subtract from zc the mean of the rated rows in the same cell and the other folds.
+
+    When the row's fold is the only one with rated rows in the cell, the mean over all of them is used.
+    Excluded rows are centered too but never contribute to a mean."""
+    rated = df.filter(pl.col("ex").is_null())
+    tot = rated.group_by(cells).agg(pl.col("zc").sum().alias("_ts"), pl.len().alias("_tn"))
+    byf = rated.group_by(cells + ["fold"]).agg(pl.col("zc").sum().alias("_fs"), pl.len().alias("_fn"))
+    df = df.join(tot, on=cells, how="left").join(byf, on=cells + ["fold"], how="left")
+    df = df.with_columns(pl.col("_fs").fill_null(0.0), pl.col("_fn").fill_null(0))
+    other = pl.col("_tn") - pl.col("_fn")
+    mean = pl.when(other > 0).then((pl.col("_ts") - pl.col("_fs")) / other).otherwise(pl.col("_ts") / pl.col("_tn"))
+    return df.with_columns((pl.col("zc") - mean.fill_null(0.0)).alias("zc")).drop("_ts", "_tn", "_fs", "_fn")
+
+
+def center(table: pl.DataFrame) -> pl.DataFrame:
+    """Adds zc: z centered within air bucket by role by position group, then within route, both cross fitted."""
+    df = table.with_columns(zc=pl.col("z"))
+    for cells in CELLS:
+        df = _center_pass(df, cells)
+    return df

@@ -107,3 +107,57 @@ def test_play_table_rejects_a_play_without_context(rating_play):
     inp, out, pred, sup = rating_play
     with pytest.raises(ValueError, match="no supplementary row"):
         rate.play_table(inp, out, pred, sup.filter(pl.col("play_id") != 1))
+import numpy as np
+
+
+def _cells_table(rows):
+    """rows are (cell, fold, zc, ex)."""
+    return pl.DataFrame(
+        {"cell": [r[0] for r in rows], "fold": [r[1] for r in rows], "zc": [r[2] for r in rows], "ex": [r[3] for r in rows]},
+        schema={"cell": pl.String, "fold": pl.Int64, "zc": pl.Float64, "ex": pl.String},
+    )
+
+
+def test_center_pass_uses_the_other_folds():
+    df = _cells_table([("a", 0, 2.0, None), ("a", 0, 2.0, None), ("a", 1, 4.0, None), ("a", 1, 4.0, None)])
+    assert rate._center_pass(df, ["cell"])["zc"].to_list() == [-2.0, -2.0, 2.0, 2.0]
+
+
+def test_center_pass_single_fold_cell_uses_all_of_it():
+    df = _cells_table([("b", 0, 1.0, None), ("b", 0, 3.0, None)])
+    assert rate._center_pass(df, ["cell"])["zc"].to_list() == [-1.0, 1.0]
+
+
+def test_center_pass_excluded_rows_are_centered_but_not_counted():
+    df = _cells_table([("a", 0, 2.0, None), ("a", 1, 4.0, None), ("a", 0, 10.0, "out of bounds")])
+    assert rate._center_pass(df, ["cell"])["zc"].to_list() == [-2.0, 2.0, 6.0]
+
+
+def _random_table(rng, players, per, effect):
+    """A rated table with a player effect of the given spread and no situational structure."""
+    grp = rng.choice(["CB", "S", "LB"], players)
+    team = rng.choice([f"T{i}" for i in range(32)], players)
+    eff = rng.normal(0, effect, players)
+    ids = np.repeat(np.arange(1, players + 1), per)
+    n = len(ids)
+    df = pl.DataFrame({
+        "game_id": rng.integers(1, 273, n), "play_id": np.arange(n), "nfl_id": ids, "name": [f"P{i}" for i in ids],
+        "pos": grp[ids - 1], "grp": grp[ids - 1], "team": team[ids - 1],
+        "cov": rng.choice(["COVER_1_MAN", "COVER_2_ZONE", "COVER_3_ZONE", "COVER_4_ZONE"], n),
+        "mz": rng.choice(["man", "zone"], n), "route": rng.choice(["GO", "OUT", "HITCH", "CROSS"], n),
+        "result": rng.choice(["C", "I"], n), "epa": rng.normal(0, 1, n), "frames": rng.integers(5, 25, n),
+        "air": rng.choice(["5-8", "9-12", "13-16", "17-40"], n), "role": rng.choice(["primary", "help"], n),
+        "start": rng.choice(["0-5", "5-10", "10-20", "20+"], n), "z": eff[ids - 1] + rng.normal(0, 1, n),
+    })
+    return df.with_columns(fold=pl.col("game_id") % 5, yards=pl.col("z") * 0.9, ex=pl.lit(None, dtype=pl.String))
+
+
+def test_center_leaves_situational_cells_near_zero():
+    rng = np.random.default_rng(0)
+    t = _random_table(rng, players=100, per=40, effect=0.3)
+    t = t.with_columns(z=pl.col("z") + (pl.col("air") == "17-40").cast(pl.Float64) * 0.5 + (pl.col("route") == "GO").cast(pl.Float64) * 0.3)
+    c = rate.center(t)
+    assert "zc" in c.columns and c.height == t.height
+    for col in ("air", "route", "role", "grp"):
+        assert c.group_by(col).agg(pl.col("zc").mean())["zc"].abs().max() < 0.1
+    assert abs(t.filter(pl.col("air") == "17-40")["z"].mean() - t.filter(pl.col("air") == "5-8")["z"].mean()) > 0.3

@@ -21,7 +21,7 @@ def roots(tmp_path, monkeypatch):
     """Point the data and model roots at a temp folder for one test, with no bucket variables set."""
     monkeypatch.setenv("KEYS_DATA", str(tmp_path / "data"))
     monkeypatch.setenv("KEYS_MODELS", str(tmp_path / "models"))
-    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN"):
+    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN", "KEYS_SITE_BUCKET"):
         monkeypatch.delenv(name, raising=False)
     reload_roots()
     yield tmp_path
@@ -108,10 +108,11 @@ def rating_play(synthetic_play):
 
 
 class FakeS3:
-    """Enough of a boto3 S3 client for pull, push and push_file: an in-memory bucket."""
+    """Enough of a boto3 S3 client for pull, push and push_file: an in-memory bucket that records upload headers."""
 
     def __init__(self):
         self.store = {}
+        self.extra = {}
 
     def get_paginator(self, name):
         assert name == "list_objects_v2"
@@ -127,8 +128,9 @@ class FakeS3:
     def download_file(self, Bucket, Key, Filename):
         Path(Filename).write_bytes(self.store[(Bucket, Key)])
 
-    def upload_file(self, Filename, Bucket, Key):
+    def upload_file(self, Filename, Bucket, Key, ExtraArgs=None):
         self.store[(Bucket, Key)] = Path(Filename).read_bytes()
+        self.extra[(Bucket, Key)] = ExtraArgs
 
 
 @pytest.fixture

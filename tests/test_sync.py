@@ -29,3 +29,26 @@ def test_pull_ignores_the_prefix_placeholder(tmp_path, fake_s3):
     s3.store[("bucket", "raw/input.csv")] = b"x"
     files = sync.pull("bucket", "raw/", tmp_path, s3=s3)
     assert [f.name for f in files] == ["input.csv"]
+
+
+def test_push_file_passes_extra_args(tmp_path, fake_s3):
+    f = tmp_path / "meta.json"
+    f.write_text("{}")
+    sync.push_file(f, "site", "data/meta.json", s3=fake_s3, extra={"CacheControl": "max-age=300"})
+    assert fake_s3.extra[("site", "data/meta.json")] == {"CacheControl": "max-age=300"}
+    sync.push_file(f, "site", "data/plain.json", s3=fake_s3)
+    assert fake_s3.extra[("site", "data/plain.json")] is None
+
+
+def test_push_directory_passes_extra_args(tmp_path, fake_s3):
+    src = tmp_path / "site"
+    (src / "games").mkdir(parents=True)
+    (src / "games" / "1.json").write_text("{}")
+    sync.push(src, "site", "data/", s3=fake_s3, extra={"ContentType": "application/json"})
+    assert fake_s3.extra[("site", "data/games/1.json")] == {"ContentType": "application/json"}
+
+
+def test_pull_file_downloads_one_object(tmp_path, fake_s3):
+    fake_s3.store[("data", "raw/supplementary_data.csv")] = b"a,b\n1,2\n"
+    dest = sync.pull_file("data", "raw/supplementary_data.csv", tmp_path / "raw" / "supplementary_data.csv", s3=fake_s3)
+    assert dest == tmp_path / "raw" / "supplementary_data.csv" and dest.read_text() == "a,b\n1,2\n"

@@ -1,3 +1,4 @@
+import json
 import math
 
 import numpy as np
@@ -58,8 +59,8 @@ def test_geometry_sideways_error_counts_nothing():
 
 
 def test_geometry_falls_back_to_the_throw_line_near_the_ball():
-    # expected half a yard short of the ball, so u runs from the throw position, due west of the ball
-    r = _geo(50.0, 20.0, 59.5, 20.0, 60.5, 20.0)
+    # expected position sits half a yard from the ball and off the throw line
+    r = _geo(50.0, 20.0, 60.0, 20.5, 61.0, 20.5)
     assert r["yards"] == pytest.approx(1.0)
 
 
@@ -112,6 +113,27 @@ def test_play_table_rejects_a_play_without_context(rating_play):
         rate.play_table(inp, out, pred, sup.filter(pl.col("play_id") != 1))
 
 
+def test_play_table_ties_for_closest_are_all_primary(rating_play):
+    inp, out, pred, sup = rating_play
+    row3 = pred.filter((pl.col("nfl_id") == 3) & (pl.col("frame_id") == 6)).row(0, named=True)
+    is4 = (pl.col("nfl_id") == 4) & (pl.col("frame_id") == 6)
+    pred2 = pred.with_columns(
+        x_pred=pl.when(is4).then(pl.lit(row3["x_pred"])).otherwise(pl.col("x_pred")),
+        y_pred=pl.when(is4).then(pl.lit(row3["y_pred"])).otherwise(pl.col("y_pred")),
+    )
+    assert rate.play_table(inp, out, pred2, sup)["role"].to_list() == ["primary", "primary"]
+
+
+def test_play_table_single_flagged_defender_is_primary(rating_play):
+    inp, out, pred, sup = rating_play
+    inp = inp.filter(pl.col("nfl_id") != 4)
+    out = out.filter(pl.col("nfl_id") != 4)
+    pred = pred.filter(pl.col("nfl_id") != 4)
+    t = rate.play_table(inp, out, pred, sup)
+    assert t.height == 1
+    assert t.row(0, named=True)["role"] == "primary" and t.row(0, named=True)["nfl_id"] == 3
+
+
 def _cells_table(rows):
     """rows are (cell, fold, zc, ex)."""
     return pl.DataFrame(
@@ -133,6 +155,11 @@ def test_center_pass_single_fold_cell_uses_all_of_it():
 def test_center_pass_excluded_rows_are_centered_but_not_counted():
     df = _cells_table([("a", 0, 2.0, None), ("a", 1, 4.0, None), ("a", 0, 10.0, "out of bounds")])
     assert rate._center_pass(df, ["cell"])["zc"].to_list() == [-2.0, 2.0, 6.0]
+
+
+def test_center_pass_leaves_a_row_whose_cell_has_no_rated_rows_unchanged():
+    df = _cells_table([("c", 0, 5.0, "out of bounds")])
+    assert rate._center_pass(df, ["cell"])["zc"].to_list() == [5.0]
 
 
 def _random_table(rng, players, per, effect):
@@ -172,6 +199,14 @@ def test_shrinkage_from_within_and_between():
     for g in s.values():
         assert 0.8 < g["within"] < 1.3 and 0.05 < g["between"] < 0.15 and 6 < g["k"] < 25
         assert g["k"] == pytest.approx(g["within"] / g["between"])
+
+
+def test_shrinkage_rejects_a_table_with_no_rated_rows():
+    t = _random_table(np.random.default_rng(5), players=3, per=2, effect=0.0)
+    t = t.with_columns(ex=pl.lit("out of bounds"))
+    t = rate.center(t)
+    with pytest.raises(ValueError, match="no rated rows"):
+        rate.shrinkage(t)
 
 
 def test_players_shrinks_tiers_and_lists_teams():
@@ -219,6 +254,7 @@ def test_gate_passes_on_a_clean_table_and_fails_when_a_cell_is_shifted():
     t = rate.center(_random_table(rng, players=400, per=50, effect=0.3))
     ok = _checked(t)
     assert ok["passed"], ok["failed"]
+    json.dumps(ok)
     assert ok["reliability"]["ok"] and ok["reliability"]["players"] >= 390 and ok["reliability"]["r"] > 0.5
     assert ok["excluded"] == {"rows": 0, "share": 0.0, "by_reason": {}, "ok": True}
     assert ok["rows"] == {"flagged": 20000, "rated": 20000, "players_listed": 400}

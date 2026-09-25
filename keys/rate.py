@@ -2,6 +2,8 @@
 
 Every function takes and returns polars frames and does no I/O, except load_supplementary."""
 
+import math
+
 import numpy as np
 import polars as pl
 
@@ -107,8 +109,18 @@ def play_table(inp: pl.DataFrame, out: pl.DataFrame, pred: pl.DataFrame, sup: pl
     rank = pl.col("dexp").rank(method="min").over(PLAY)
     d = d.with_columns(
         role=pl.when(rank == 1).then(pl.lit("primary")).otherwise(pl.lit("help")),
-        air=pl.when(nfo <= 8).then(pl.lit("5-8")).when(nfo <= 12).then(pl.lit("9-12")).when(nfo <= 16).then(pl.lit("13-16")).otherwise(pl.lit("17-40")),
-        start=pl.when(d0 < 5).then(pl.lit("0-5")).when(d0 < 10).then(pl.lit("5-10")).when(d0 < 20).then(pl.lit("10-20")).otherwise(pl.lit("20+")),
+        air=(
+            pl.when(nfo <= 8).then(pl.lit("5-8"))
+            .when(nfo <= 12).then(pl.lit("9-12"))
+            .when(nfo <= 16).then(pl.lit("13-16"))
+            .otherwise(pl.lit("17-40"))
+        ),
+        start=(
+            pl.when(d0 < 5).then(pl.lit("0-5"))
+            .when(d0 < 10).then(pl.lit("5-10"))
+            .when(d0 < 20).then(pl.lit("10-20"))
+            .otherwise(pl.lit("20+"))
+        ),
         grp=pl.col("player_position").replace_strict(GROUPS, default="LB"),
     )
     keep = KEY + [
@@ -144,6 +156,8 @@ def center(table: pl.DataFrame) -> pl.DataFrame:
 def shrinkage(table: pl.DataFrame) -> dict[str, dict[str, float]]:
     """Per position group: the variance within players, the variance between player means, and k = within / between."""
     rated = table.filter(pl.col("ex").is_null())
+    if not rated.height:
+        raise ValueError("no rated rows: every flagged defender play is excluded")
     means = rated.group_by("nfl_id", "grp").agg(pl.len().alias("n"), pl.col("zc").mean().alias("mean"))
     means = means.filter(pl.col("n") >= MIN_PLAYS)
     out = {}
@@ -159,7 +173,7 @@ def shrinkage(table: pl.DataFrame) -> dict[str, dict[str, float]]:
 def players(table: pl.DataFrame, shrink: dict) -> pl.DataFrame:
     """One row per defender: n, means, the shrunk rating with its standard error and tier, and his teams."""
     rated = table.filter(pl.col("ex").is_null())
-    teams = (
+    by_team = (
         rated.group_by("nfl_id", "team").len().filter(pl.col("len") >= 10)
         .sort("nfl_id", "len", descending=[False, True])
         .group_by("nfl_id", maintain_order=True).agg(pl.col("team").alias("teams"), pl.col("len").alias("team_n"))
@@ -168,7 +182,7 @@ def players(table: pl.DataFrame, shrink: dict) -> pl.DataFrame:
         pl.len().alias("n"), pl.col("name").last(), pl.col("pos").last(), pl.col("grp").last(),
         pl.col("zc").mean().alias("mean"), pl.col("yards").mean().alias("yards"),
         (pl.col("result") == "C").mean().alias("comp"), pl.col("epa").mean().alias("epa"),
-    ).join(teams, on="nfl_id", how="left")
+    ).join(by_team, on="nfl_id", how="left")
     k = pl.col("grp").replace_strict({g: v["k"] for g, v in shrink.items()}, return_dtype=pl.Float64)
     within = pl.col("grp").replace_strict({g: v["within"] for g, v in shrink.items()}, return_dtype=pl.Float64)
     p = p.with_columns(rating=pl.col("mean") * pl.col("n") / (pl.col("n") + k), se=(within / (pl.col("n") + k)).sqrt())
@@ -197,7 +211,8 @@ def split_half(rated: pl.DataFrame) -> tuple[float | None, int]:
     h = h.filter((pl.col("n_0") >= GATE["half_plays"]) & (pl.col("n_1") >= GATE["half_plays"]))
     if h.height < 2:
         return None, h.height
-    return float(np.corrcoef(h["zc_0"], h["zc_1"])[0, 1]), h.height
+    r = float(np.corrcoef(h["zc_0"], h["zc_1"])[0, 1])
+    return (r if math.isfinite(r) else None), h.height
 
 
 def _cells(rated: pl.DataFrame, dim: str) -> list[dict]:
@@ -239,7 +254,7 @@ def gate(table: pl.DataFrame, players_df: pl.DataFrame) -> dict:
         "league_mean": {"value": league, "ok": league_ok},
         "excluded": {"rows": table.height - rated.height, "share": share, "by_reason": by_reason, "ok": ex_ok},
         "rows": {"flagged": table.height, "rated": rated.height, "players_listed": listed.height},
-        "rules": GATE,
+        "rules": {**GATE},
     }
 
 

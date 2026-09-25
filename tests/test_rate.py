@@ -208,3 +208,54 @@ def test_teams_mean_and_se():
     assert t["team"].to_list() == ["KC", "DET"] and t["mean"].to_list() == [2.0, -2.0] and t["n"].to_list() == [4, 4]
     within = table["zc"].var()
     assert t["se"][0] == pytest.approx(math.sqrt(within / 4))
+
+
+def _checked(t):
+    return rate.gate(t, rate.players(t, rate.shrinkage(t)))
+
+
+def test_gate_passes_on_a_clean_table_and_fails_when_a_cell_is_shifted():
+    rng = np.random.default_rng(2)
+    t = rate.center(_random_table(rng, players=400, per=50, effect=0.3))
+    ok = _checked(t)
+    assert ok["passed"], ok["failed"]
+    assert ok["reliability"]["ok"] and ok["reliability"]["players"] >= 390 and ok["reliability"]["r"] > 0.5
+    assert ok["excluded"] == {"rows": 0, "share": 0.0, "by_reason": {}, "ok": True}
+    assert ok["rows"] == {"flagged": 20000, "rated": 20000, "players_listed": 400}
+    assert {c["dim"] for c in ok["cells"]} == set(rate.GATED) and all(c["ok"] for c in ok["cells"])
+    assert ok["limit"] == pytest.approx(0.25 * ok["player_sd"]) and set(ok["info"]) == {"result", "team"}
+    shifted = t.with_columns(zc=pl.when(pl.col("cov") == "COVER_2_ZONE").then(pl.col("zc") + 1.0).otherwise(pl.col("zc")))
+    bad = _checked(shifted)
+    assert not bad["passed"] and any(f.startswith("cov=COVER_2_ZONE") for f in bad["failed"])
+
+
+def test_gate_fails_without_a_player_effect_or_enough_players():
+    rng = np.random.default_rng(3)
+    noise = rate.center(_random_table(rng, players=400, per=50, effect=0.0))
+    res = _checked(noise)
+    assert not res["passed"] and any(f.startswith("reliability") for f in res["failed"])
+    small = rate.center(_random_table(rng, players=20, per=50, effect=0.3))
+    res = _checked(small)
+    assert not res["passed"] and res["reliability"]["players"] < 30 and not res["reliability"]["ok"]
+
+
+def test_gate_counts_exclusions_and_league_mean():
+    rng = np.random.default_rng(4)
+    t = rate.center(_random_table(rng, players=400, per=50, effect=0.3))
+    t = t.with_columns(ex=pl.when(pl.col("play_id") < 4000).then(pl.lit("not catchable")).otherwise(pl.lit(None, dtype=pl.String)))
+    res = _checked(t)
+    assert not res["passed"] and res["excluded"]["by_reason"] == {"not catchable": 4000} and not res["excluded"]["ok"]
+    assert res["excluded"]["share"] == pytest.approx(0.2) and res["rows"]["rated"] == 16000
+    off = t.with_columns(ex=pl.lit(None, dtype=pl.String), zc=pl.col("zc") + 0.05)
+    res = _checked(off)
+    assert not res["league_mean"]["ok"] and any(f.startswith("league mean") for f in res["failed"])
+
+
+def test_compute_returns_every_piece(rating_play):
+    inp, out, pred, sup = rating_play
+    res = rate.compute(inp, out, pred, sup)
+    assert set(res) == {"table", "players", "teams", "shrink", "checks"}
+    assert res["table"].height == 2 and "zc" in res["table"].columns
+    assert res["players"].height == 2 and not res["players"]["listed"].any()
+    assert res["teams"]["team"].to_list() == ["KC"] and set(res["shrink"]) == {"CB", "S"}
+    assert res["checks"]["passed"] is False and res["checks"]["reliability"]["players"] == 0

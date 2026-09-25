@@ -2,7 +2,7 @@
 
 Every function takes and returns polars frames and does no I/O, except load_supplementary."""
 
-import numpy as np  # noqa: F401
+import numpy as np
 import polars as pl
 
 from keys import KEY
@@ -186,3 +186,66 @@ def teams(table: pl.DataFrame) -> pl.DataFrame:
     within = float(rated["zc"].var() or 0.0)
     t = rated.group_by("team").agg(pl.len().alias("n"), pl.col("zc").mean().alias("mean"))
     return t.with_columns(se=(within / pl.col("n")).sqrt()).sort("mean", "team", descending=[True, False])
+
+
+def split_half(rated: pl.DataFrame) -> tuple[float | None, int]:
+    """Correlation of player means between even and odd game ids, over players with enough plays in both halves."""
+    h = rated.with_columns(half=pl.col("game_id") % 2).group_by("nfl_id", "half").agg(pl.len().alias("n"), pl.col("zc").mean())
+    h = h.pivot(on="half", index="nfl_id", values=["zc", "n"])
+    if not {"zc_0", "zc_1", "n_0", "n_1"} <= set(h.columns):
+        return None, 0
+    h = h.filter((pl.col("n_0") >= GATE["half_plays"]) & (pl.col("n_1") >= GATE["half_plays"]))
+    if h.height < 2:
+        return None, h.height
+    return float(np.corrcoef(h["zc_0"], h["zc_1"])[0, 1]), h.height
+
+
+def _cells(rated: pl.DataFrame, dim: str) -> list[dict]:
+    t = rated.group_by(dim).agg(pl.len().alias("n"), pl.col("zc").mean().alias("mean"))
+    t = t.filter(pl.col("n") >= GATE["cell_rows"]).sort(dim)
+    return [{"dim": dim, "cell": str(r[dim]), "n": r["n"], "mean": r["mean"]} for r in t.iter_rows(named=True)]
+
+
+def gate(table: pl.DataFrame, players_df: pl.DataFrame) -> dict:
+    """Every check with its numbers, and passed. Values are plain python so the dict can be written as json."""
+    rated = table.filter(pl.col("ex").is_null())
+    listed = players_df.filter(pl.col("listed"))
+    player_sd = float(listed["mean"].std()) if listed.height >= 2 else None
+    limit = GATE["cell_share"] * player_sd if player_sd is not None else None
+    cells, failed = [], []
+    for dim in GATED:
+        for c in _cells(rated, dim):
+            c["ok"] = limit is not None and abs(c["mean"]) <= limit
+            cells.append(c)
+            if not c["ok"]:
+                failed.append(f"{dim}={c['cell']} mean {c['mean']:+.3f}")
+    r, n_half = split_half(rated)
+    rel_ok = r is not None and n_half >= GATE["half_players"] and r >= GATE["reliability"]
+    if not rel_ok:
+        failed.append(f"reliability {r} over {n_half} players")
+    league = float(rated["zc"].mean()) if rated.height else None
+    league_ok = league is not None and abs(league) <= GATE["league_mean"]
+    if not league_ok:
+        failed.append(f"league mean {league}")
+    by_reason = {k: v for k, v in table["ex"].drop_nulls().value_counts().rows()}
+    share = (table.height - rated.height) / table.height if table.height else 1.0
+    ex_ok = share <= GATE["excluded_share"]
+    if not ex_ok:
+        failed.append(f"excluded share {share:.3f}")
+    return {
+        "passed": not failed, "failed": failed, "limit": limit, "player_sd": player_sd, "cells": cells,
+        "info": {dim: _cells(rated, dim) for dim in INFO},
+        "reliability": {"r": r, "players": n_half, "ok": rel_ok},
+        "league_mean": {"value": league, "ok": league_ok},
+        "excluded": {"rows": table.height - rated.height, "share": share, "by_reason": by_reason, "ok": ex_ok},
+        "rows": {"flagged": table.height, "rated": rated.height, "players_listed": listed.height},
+        "rules": GATE,
+    }
+
+
+def compute(inp: pl.DataFrame, out: pl.DataFrame, pred: pl.DataFrame, sup: pl.DataFrame) -> dict:
+    """The whole rating: the centered play table, the player and team tables, the shrinkage table and the gate."""
+    table = center(play_table(inp, out, pred, sup))
+    shrink = shrinkage(table)
+    players_df = players(table, shrink)
+    return {"table": table, "players": players_df, "teams": teams(table), "shrink": shrink, "checks": gate(table, players_df)}

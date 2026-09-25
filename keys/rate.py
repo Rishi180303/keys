@@ -139,3 +139,50 @@ def center(table: pl.DataFrame) -> pl.DataFrame:
     for cells in CELLS:
         df = _center_pass(df, cells)
     return df
+
+
+def shrinkage(table: pl.DataFrame) -> dict[str, dict[str, float]]:
+    """Per position group: the variance within players, the variance between player means, and k = within / between."""
+    rated = table.filter(pl.col("ex").is_null())
+    means = rated.group_by("nfl_id", "grp").agg(pl.len().alias("n"), pl.col("zc").mean().alias("mean"))
+    means = means.filter(pl.col("n") >= MIN_PLAYS)
+    out = {}
+    for grp in sorted(rated["grp"].unique().to_list()):
+        within = float(rated.filter(pl.col("grp") == grp)["zc"].var() or 0.0)
+        m = means.filter(pl.col("grp") == grp)
+        between = float(m["mean"].var() - within / m["n"].mean()) if m.height >= 2 else 0.0
+        between = max(between, 1e-6)
+        out[grp] = {"within": within, "between": between, "k": within / between}
+    return out
+
+
+def players(table: pl.DataFrame, shrink: dict) -> pl.DataFrame:
+    """One row per defender: n, means, the shrunk rating with its standard error and tier, and his teams."""
+    rated = table.filter(pl.col("ex").is_null())
+    teams = (
+        rated.group_by("nfl_id", "team").len().filter(pl.col("len") >= 10)
+        .sort("nfl_id", "len", descending=[False, True])
+        .group_by("nfl_id", maintain_order=True).agg(pl.col("team").alias("teams"), pl.col("len").alias("team_n"))
+    )
+    p = rated.group_by("nfl_id").agg(
+        pl.len().alias("n"), pl.col("name").last(), pl.col("pos").last(), pl.col("grp").last(),
+        pl.col("zc").mean().alias("mean"), pl.col("yards").mean().alias("yards"),
+        (pl.col("result") == "C").mean().alias("comp"), pl.col("epa").mean().alias("epa"),
+    ).join(teams, on="nfl_id", how="left")
+    k = pl.col("grp").replace_strict({g: v["k"] for g, v in shrink.items()}, return_dtype=pl.Float64)
+    within = pl.col("grp").replace_strict({g: v["within"] for g, v in shrink.items()}, return_dtype=pl.Float64)
+    p = p.with_columns(rating=pl.col("mean") * pl.col("n") / (pl.col("n") + k), se=(within / (pl.col("n") + k)).sqrt())
+    tier = (
+        pl.when(pl.col("rating") > 2 * pl.col("se")).then(pl.lit("above"))
+        .when(pl.col("rating") < -2 * pl.col("se")).then(pl.lit("below"))
+        .otherwise(pl.lit("average"))
+    )
+    return p.with_columns(tier=tier, listed=pl.col("n") >= MIN_PLAYS).sort("rating", "nfl_id", descending=[True, False])
+
+
+def teams(table: pl.DataFrame) -> pl.DataFrame:
+    """One row per defensive team: n, mean and standard error, no shrinkage."""
+    rated = table.filter(pl.col("ex").is_null())
+    within = float(rated["zc"].var() or 0.0)
+    t = rated.group_by("team").agg(pl.len().alias("n"), pl.col("zc").mean().alias("mean"))
+    return t.with_columns(se=(within / pl.col("n")).sqrt()).sort("mean", "team", descending=[True, False])

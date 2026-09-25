@@ -1,3 +1,6 @@
+import math
+
+import numpy as np
 import polars as pl
 import pytest
 
@@ -107,7 +110,6 @@ def test_play_table_rejects_a_play_without_context(rating_play):
     inp, out, pred, sup = rating_play
     with pytest.raises(ValueError, match="no supplementary row"):
         rate.play_table(inp, out, pred, sup.filter(pl.col("play_id") != 1))
-import numpy as np
 
 
 def _cells_table(rows):
@@ -161,3 +163,48 @@ def test_center_leaves_situational_cells_near_zero():
     for col in ("air", "route", "role", "grp"):
         assert c.group_by(col).agg(pl.col("zc").mean())["zc"].abs().max() < 0.1
     assert abs(t.filter(pl.col("air") == "17-40")["z"].mean() - t.filter(pl.col("air") == "5-8")["z"].mean()) > 0.3
+
+
+def test_shrinkage_from_within_and_between():
+    rng = np.random.default_rng(1)
+    s = rate.shrinkage(rate.center(_random_table(rng, players=300, per=60, effect=0.3)))
+    assert set(s) == {"CB", "S", "LB"}
+    for g in s.values():
+        assert 0.8 < g["within"] < 1.3 and 0.05 < g["between"] < 0.15 and 6 < g["k"] < 25
+        assert g["k"] == pytest.approx(g["within"] / g["between"])
+
+
+def test_players_shrinks_tiers_and_lists_teams():
+    shrink = {"CB": {"within": 1.0, "between": 0.02, "k": 50.0}}
+    table = pl.DataFrame({
+        "nfl_id": [1] * 50 + [2] * 30, "name": ["A"] * 50 + ["B"] * 30, "pos": ["CB"] * 80, "grp": ["CB"] * 80,
+        "team": ["KC"] * 50 + ["DET"] * 25 + ["LV"] * 5, "zc": [0.5] * 50 + [-0.3] * 30, "yards": [0.4] * 80,
+        "result": ["C"] * 40 + ["I"] * 40, "epa": [0.1] * 80,
+    }).with_columns(ex=pl.lit(None, dtype=pl.String))
+    p = rate.players(table, shrink)
+    assert p["nfl_id"].to_list() == [1, 2]
+    a, b = p.row(0, named=True), p.row(1, named=True)
+    assert a["rating"] == pytest.approx(0.25) and a["se"] == pytest.approx(0.1) and a["tier"] == "above" and a["listed"]
+    assert b["rating"] == pytest.approx(-0.1125) and b["se"] == pytest.approx(math.sqrt(1 / 80)) and b["tier"] == "average"
+    assert a["teams"] == ["KC"] and a["team_n"] == [50] and b["teams"] == ["DET"] and b["team_n"] == [25]
+    assert a["comp"] == pytest.approx(0.8) and b["comp"] == 0.0 and a["yards"] == pytest.approx(0.4) and a["n"] == 50
+
+
+def test_players_below_tier_and_unlisted():
+    shrink = {"S": {"within": 1.0, "between": 0.05, "k": 20.0}}
+    table = pl.DataFrame({
+        "nfl_id": [7] * 20, "name": ["C"] * 20, "pos": ["FS"] * 20, "grp": ["S"] * 20, "team": ["SEA"] * 20,
+        "zc": [-1.0] * 20, "yards": [-0.9] * 20, "result": ["I"] * 20, "epa": [0.0] * 20,
+    }).with_columns(ex=pl.lit(None, dtype=pl.String))
+    c = rate.players(table, shrink).row(0, named=True)
+    assert c["rating"] == pytest.approx(-0.5) and c["tier"] == "below" and not c["listed"]
+
+
+def test_teams_mean_and_se():
+    table = pl.DataFrame({"team": ["KC"] * 4 + ["DET"] * 4, "zc": [1.0, 3.0, 1.0, 3.0, -1.0, -3.0, -1.0, -3.0]}).with_columns(
+        ex=pl.lit(None, dtype=pl.String)
+    )
+    t = rate.teams(table)
+    assert t["team"].to_list() == ["KC", "DET"] and t["mean"].to_list() == [2.0, -2.0] and t["n"].to_list() == [4, 4]
+    within = table["zc"].var()
+    assert t["se"][0] == pytest.approx(math.sqrt(within / 4))

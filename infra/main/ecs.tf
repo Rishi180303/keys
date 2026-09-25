@@ -21,9 +21,16 @@ resource "aws_security_group" "jobs" {
 locals {
   # every job runs the train image and the command picks the stage; score and publish share the score role
   tasks = {
-    prepare = { cpu = 2048, memory = 8192, role = aws_iam_role.job["prepare"].arn, log = "prepare" }
-    train   = { cpu = 4096, memory = 16384, role = aws_iam_role.job["train"].arn, log = "train" }
-    score   = { cpu = 2048, memory = 8192, role = aws_iam_role.job["score"].arn, log = "train" }
+    prepare = { cpu = 2048, memory = 8192, role = aws_iam_role.job["prepare"].arn, log = "prepare", env = [] }
+    train   = { cpu = 4096, memory = 16384, role = aws_iam_role.job["train"].arn, log = "train", env = [] }
+    score   = { cpu = 2048, memory = 8192, role = aws_iam_role.job["score"].arn, log = "train", env = [] }
+    rate = {
+      cpu = 2048, memory = 8192, role = aws_iam_role.job["rate"].arn, log = "train"
+      env = [
+        { name = "KEYS_SITE_BUCKET", value = local.site_b },
+        { name = "KEYS_API_URL", value = "${aws_apigatewayv2_api.keys.api_endpoint}/predict" },
+      ]
+    }
   }
 }
 
@@ -45,7 +52,7 @@ resource "aws_ecs_task_definition" "job" {
     image       = "${local.image}-train"
     essential   = true
     command     = [each.key]
-    environment = local.job_env
+    environment = concat(local.job_env, each.value.env)
     logConfiguration = {
       logDriver = "awslogs"
       options = {

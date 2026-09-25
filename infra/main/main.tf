@@ -44,6 +44,7 @@ locals {
   account = data.aws_caller_identity.me.account_id
   data_b  = "keys-data-${local.account}"
   art_b   = "keys-artifacts-${local.account}"
+  site_b  = "keys-site-${local.account}"
   image   = "${aws_ecr_repository.keys.repository_url}:${var.image_tag}"
   job_env = [
     { name = "KEYS_DATA_BUCKET", value = local.data_b },

@@ -16,7 +16,7 @@ resource "aws_sfn_state_machine" "pipeline" {
   name     = "keys-pipeline"
   role_arn = aws_iam_role.states.arn
   definition = jsonencode({
-    Comment        = "prepare, train five folds, score, publish"
+    Comment        = "prepare, train five folds, score, publish, rate"
     StartAt        = "Prepare"
     TimeoutSeconds = 43200
     States = {
@@ -95,6 +95,19 @@ resource "aws_sfn_state_machine" "pipeline" {
           TaskDefinition       = aws_ecs_task_definition.job["score"].arn
           NetworkConfiguration = local.network
           Overrides            = { ContainerOverrides = [{ Name = "job", Command = ["publish"], Environment = local.common_env }] }
+        }
+        Next = "Rate"
+      }
+      Rate = {
+        Type       = "Task"
+        Resource   = "arn:aws:states:::ecs:runTask.sync"
+        ResultPath = null
+        Parameters = {
+          LaunchType           = "FARGATE"
+          Cluster              = aws_ecs_cluster.keys.arn
+          TaskDefinition       = aws_ecs_task_definition.job["rate"].arn
+          NetworkConfiguration = local.network
+          Overrides            = { ContainerOverrides = [{ Name = "job", Command = ["rate"], Environment = local.common_env }] }
         }
         End = true
       }

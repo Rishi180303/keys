@@ -38,6 +38,14 @@ locals {
       write = ["${aws_s3_bucket.artifacts.arn}/predictions/*", "${aws_s3_bucket.artifacts.arn}/summary/*"]
       list  = [aws_s3_bucket.data.arn, aws_s3_bucket.artifacts.arn]
     }
+    rate = {
+      read = [
+        "${aws_s3_bucket.data.arn}/raw/supplementary_data.csv", "${aws_s3_bucket.data.arn}/processed/*",
+        "${aws_s3_bucket.artifacts.arn}/predictions/*", "${aws_s3_bucket.artifacts.arn}/summary/*",
+      ]
+      write = ["${aws_s3_bucket.artifacts.arn}/ratings/*", "${aws_s3_bucket.site.arn}/data/*"]
+      list  = [aws_s3_bucket.data.arn, aws_s3_bucket.artifacts.arn, aws_s3_bucket.site.arn]
+    }
   }
 }
 

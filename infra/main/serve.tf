@@ -87,6 +87,7 @@ resource "aws_apigatewayv2_api" "keys" {
     allow_origins = ["*"]
     allow_methods = ["POST", "OPTIONS"]
     allow_headers = ["content-type"]
+    max_age       = 3600
   }
 }
 

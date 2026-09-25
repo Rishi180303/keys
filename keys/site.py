@@ -1,11 +1,13 @@
 """The website's data files: the plays table, one file per game for the viewer, and the meta file."""
 
 import json
+import shutil
 from pathlib import Path
 
 import polars as pl
 
 from keys import KEY
+from keys.rate import MIN_PLAYS
 
 PLAY_COLUMNS = {
     "game_id": "game", "play_id": "play", "week": "week", "nfl_id": "id", "name": "name", "pos": "pos", "grp": "grp",
@@ -54,7 +56,8 @@ def games_json(inp: pl.DataFrame, out: pl.DataFrame, pred: pl.DataFrame, table: 
     people = frames.join(actual, on=KEY, how="left").join(expected, on=KEY, how="left")
     meta = inp.group_by("game_id", "play_id").agg(
         pl.col("play_direction").first().alias("dir"), pl.col("absolute_yardline_number").first().alias("yl"),
-        pl.col("num_frames_output").first().alias("nfo"), pl.col("ball_land_x").first().alias("lx"), pl.col("ball_land_y").first().alias("ly"),
+        pl.col("num_frames_output").first().alias("nfo"), pl.col("ball_land_x").first().round(2).alias("lx"),
+        pl.col("ball_land_y").first().round(2).alias("ly"),
     ).join(sup, on=["game_id", "play_id"], how="left")
     ratings: dict[tuple, list] = {}
     for row in plays_table(table).select(["game", "play"] + RATING_KEYS).to_dicts():
@@ -97,7 +100,7 @@ def meta_json(run: str, api_url: str, summary: dict | None, result: dict, genera
     table = result["table"]
     return {
         "run": run, "generated": generated, "api_url": api_url, "summary": summary, "gate": result["checks"],
-        "shrink": result["shrink"], "min_plays": 30,
+        "shrink": result["shrink"], "min_plays": MIN_PLAYS,
         "counts": {"plays": table.select("game_id", "play_id").n_unique(), "games": table["game_id"].n_unique()},
     }
 
@@ -109,6 +112,7 @@ def _dump(obj) -> str:
 def write_site(dest, plays: dict, games: dict[int, dict], meta: dict) -> list[Path]:
     """plays.json, meta.json and games/<game_id>.json under dest, compact, no NaN allowed. Returns the files."""
     dest = Path(dest)
+    shutil.rmtree(dest, ignore_errors=True)
     (dest / "games").mkdir(parents=True, exist_ok=True)
     files = [dest / "plays.json", dest / "meta.json"]
     files[0].write_text(_dump(plays))

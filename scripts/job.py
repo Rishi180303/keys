@@ -77,6 +77,9 @@ def stage_publish():
 
 
 def stage_rate():
+    api_url = os.environ.get("KEYS_API_URL", "")
+    if SITE_BUCKET and not api_url:
+        raise ValueError("KEYS_API_URL must be set when KEYS_SITE_BUCKET is set")
     sup_path = paths.SUPPLEMENTARY
     pred_path = paths.DATA / "predictions" / "predictions.parquet"
     summary_path = paths.MODELS / "summary.json"
@@ -103,7 +106,7 @@ def stage_rate():
         raise ValueError("rating gate failed: " + "; ".join(checks["failed"]))
     summary = json.loads(summary_path.read_text()) if summary_path.exists() else None
     generated = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    meta = site.meta_json(RUN, os.environ.get("KEYS_API_URL", ""), summary, result, generated)
+    meta = site.meta_json(RUN, api_url, summary, result, generated)
     dest = paths.DATA / "site"
     games = site.games_json(inp, out, pred, result["table"], sup)
     files = site.write_site(dest, site.plays_json(result["table"]), games, meta)

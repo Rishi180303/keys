@@ -44,8 +44,12 @@ def test_game_file_round_trips_the_input_rows(rating_play):
 def test_write_site_and_meta(tmp_path, rating_play):
     inp, out, pred, sup = rating_play
     res = rate.compute(inp, out, pred, sup)
+    stale = tmp_path / "site" / "games" / "999.json"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("{}")
     meta = site.meta_json("run1", "https://x.invalid/predict", {"le40": {"mean": 0.5}}, res, "2026-09-24T00:00:00Z")
     files = site.write_site(tmp_path / "site", site.plays_json(res["table"]), site.games_json(inp, out, pred, res["table"], sup), meta)
+    assert not stale.exists()
     assert [f.name for f in files] == ["plays.json", "meta.json", "1.json"] and files[2].parent.name == "games"
     m = json.loads(files[1].read_text())
     assert m["run"] == "run1" and m["api_url"] == "https://x.invalid/predict" and m["summary"] == {"le40": {"mean": 0.5}}

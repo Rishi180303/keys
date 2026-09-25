@@ -5,7 +5,7 @@ Every function takes and returns polars frames and does no I/O, except load_supp
 import numpy as np  # noqa: F401
 import polars as pl
 
-from keys import KEY  # noqa: F401
+from keys import KEY
 from keys.features import FIELD_X, FIELD_Y
 
 GROUPS = {"CB": "CB", "DB": "CB", "FS": "S", "SS": "S", "S": "S"}  # every other position is LB
@@ -67,3 +67,52 @@ def exclusion() -> pl.Expr:
         .otherwise(pl.lit(None, dtype=pl.String))
         .alias("ex")
     )
+
+
+def _arrival(frames: pl.DataFrame, nfo: pl.DataFrame, cols: list[str]) -> pl.DataFrame:
+    """The row at the arrival frame for every player in nfo."""
+    return frames.join(nfo, on=KEY).filter(pl.col("frame_id") == pl.col("num_frames_output")).select(KEY + cols)
+
+
+def play_table(inp: pl.DataFrame, out: pl.DataFrame, pred: pl.DataFrame, sup: pl.DataFrame) -> pl.DataFrame:
+    """One row per flagged defender play: geometry, situation, context and the exclusion reason.
+
+    Raises when a flagged player has no arrival row, a play does not have one targeted receiver,
+    or a play has no supplementary row."""
+    last = inp.filter(pl.col("player_to_predict")).sort(KEY + ["frame_id"]).group_by(KEY).agg(
+        pl.col("player_role", "player_position", "player_name", "num_frames_output", "ball_land_x", "ball_land_y").last(),
+        pl.col("x").last().alias("x0"), pl.col("y").last().alias("y0"),
+    )
+    nfo = last.select(KEY + ["num_frames_output"])
+    actual = _arrival(out, nfo, ["x", "y"])
+    expected = _arrival(pred, nfo, ["x_pred", "y_pred", "sd_x", "sd_y", "fold"])
+    df = last.join(actual, on=KEY, how="left").join(expected, on=KEY, how="left")
+    missing = df.filter(pl.col("x").is_null() | pl.col("x_pred").is_null())
+    if missing.height:
+        raise ValueError(f"{missing.height} flagged players have no arrival row, first {missing.select(KEY).row(0)}")
+    recv = df.filter(pl.col("player_role") == "Targeted Receiver").with_columns(
+        recv_dist=((pl.col("x") - pl.col("ball_land_x")) ** 2 + (pl.col("y") - pl.col("ball_land_y")) ** 2).sqrt()
+    )
+    counts = df.select(PLAY).unique().join(recv.group_by(PLAY).len(), on=PLAY, how="left")
+    bad = counts.filter(pl.col("len").fill_null(0) != 1)
+    if bad.height:
+        raise ValueError(f"{bad.height} plays do not have exactly one targeted receiver, first {bad.row(0)}")
+    d = df.filter(pl.col("player_role") == "Defensive Coverage").join(recv.select(PLAY + ["recv_dist"]), on=PLAY)
+    d = geometry(d).with_columns(exclusion())
+    d = d.join(sup.select(PLAY + ["week", "team", "cov", "mz", "route", "result", "epa"]), on=PLAY, how="left")
+    missing = d.filter(pl.col("team").is_null())
+    if missing.height:
+        raise ValueError(f"{missing.height} defender plays have no supplementary row, first {missing.select(PLAY).row(0)}")
+    nfo, d0 = pl.col("num_frames_output"), pl.col("d0")
+    rank = pl.col("dexp").rank(method="min").over(PLAY)
+    d = d.with_columns(
+        role=pl.when(rank == 1).then(pl.lit("primary")).otherwise(pl.lit("help")),
+        air=pl.when(nfo <= 8).then(pl.lit("5-8")).when(nfo <= 12).then(pl.lit("9-12")).when(nfo <= 16).then(pl.lit("13-16")).otherwise(pl.lit("17-40")),
+        start=pl.when(d0 < 5).then(pl.lit("0-5")).when(d0 < 10).then(pl.lit("5-10")).when(d0 < 20).then(pl.lit("10-20")).otherwise(pl.lit("20+")),
+        grp=pl.col("player_position").replace_strict(GROUPS, default="LB"),
+    )
+    keep = KEY + [
+        "week", "player_name", "player_position", "grp", "team", "cov", "mz", "route", "result", "epa", "num_frames_output",
+        "air", "role", "start", "d0", "dexp", "dact", "yards", "sdu", "z", "ex", "fold",
+    ]
+    return d.select(keep).rename({"player_name": "name", "player_position": "pos", "num_frames_output": "frames"}).sort(KEY)

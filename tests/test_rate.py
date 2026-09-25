@@ -74,3 +74,36 @@ def test_exclusion_reasons_in_priority_order():
     assert df.with_columns(rate.exclusion())["ex"].to_list() == expected
     ok = pl.DataFrame({"num_frames_output": [40], "ball_land_x": [0.0], "ball_land_y": [53.3], "recv_dist": [4.0]})
     assert ok.with_columns(rate.exclusion())["ex"].to_list() == [None]
+
+
+def test_play_table_geometry_role_and_context(rating_play):
+    from keys import train
+
+    inp, out, pred, sup = rating_play
+    t = rate.play_table(inp, out, pred, sup)
+    assert t.height == 2 and t["nfl_id"].to_list() == [3, 4]
+    a, b = t.row(0, named=True), t.row(1, named=True)
+    assert a["yards"] == pytest.approx(1.0) and a["z"] == pytest.approx(2.0) and a["role"] == "primary" and a["grp"] == "CB"
+    assert b["yards"] == pytest.approx(-0.5) and b["z"] == pytest.approx(-1.0) and b["role"] == "help" and b["grp"] == "S"
+    assert a["ex"] is None and a["air"] == "5-8" and a["start"] == "5-10" and b["start"] == "10-20"
+    assert a["team"] == "KC" and a["route"] == "GO" and a["result"] == "C" and a["frames"] == 6
+    assert a["fold"] == train.fold_of(1) and a["name"] == "Defender" and b["pos"] == "FS" and a["week"] == 1
+
+
+def test_play_table_rejects_missing_arrival_rows(rating_play):
+    inp, out, pred, sup = rating_play
+    with pytest.raises(ValueError, match="no arrival row"):
+        rate.play_table(inp, out, pred.filter(pl.col("nfl_id") != 4), sup)
+
+
+def test_play_table_rejects_a_play_without_one_receiver(rating_play):
+    inp, out, pred, sup = rating_play
+    role = pl.when(pl.col("nfl_id") == 4).then(pl.lit("Targeted Receiver")).otherwise(pl.col("player_role"))
+    with pytest.raises(ValueError, match="exactly one targeted receiver"):
+        rate.play_table(inp.with_columns(role.alias("player_role")), out, pred, sup)
+
+
+def test_play_table_rejects_a_play_without_context(rating_play):
+    inp, out, pred, sup = rating_play
+    with pytest.raises(ValueError, match="no supplementary row"):
+        rate.play_table(inp, out, pred, sup.filter(pl.col("play_id") != 1))

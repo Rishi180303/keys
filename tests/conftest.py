@@ -69,6 +69,44 @@ def synthetic_play():
     return inp, pl.DataFrame(out_rows)
 
 
+@pytest.fixture
+def rating_play(synthetic_play):
+    """The synthetic play plus a far safety, with expected paths built so the rating values are known.
+
+    Defender 3 (CB) ends 1.0 yards closer to the ball than expected along the line to it and defender 4 (FS)
+    ends 0.5 yards farther. Every expected standard deviation is 0.5, so their z values are 2.0 and -1.0.
+    Defender 3 is the closest expected, so it is primary and 4 is help."""
+    from keys import train
+
+    inp, out = synthetic_play
+    inp = pl.concat([inp, pl.DataFrame(_rows(4, "Far Safety", "FS", "Defense", "Defensive Coverage", True, 80.0, 20.0, 4.0, 270))])
+    last = inp.filter(pl.col("nfl_id") == 4).sort("frame_id").row(-1, named=True)
+    vx = last["s"] * math.sin(math.radians(last["dir"]))
+    vy = last["s"] * math.cos(math.radians(last["dir"]))
+    extra = [
+        {"game_id": 1, "play_id": 1, "nfl_id": 4, "frame_id": k, "x": last["x"] + vx * 0.1 * k, "y": last["y"] + vy * 0.1 * k}
+        for k in range(1, FRAMES_OUT + 1)
+    ]
+    out = pl.concat([out, pl.DataFrame(extra)])
+    land = (60.0, 20.0)
+    shift = {3: -1.0, 4: 0.5}  # where the expected arrival sits along the line to the ball, relative to the actual one
+    rows = []
+    for r in out.sort("nfl_id", "frame_id").iter_rows(named=True):
+        x, y = r["x"], r["y"]
+        if r["frame_id"] == FRAMES_OUT and r["nfl_id"] in shift:
+            dx, dy = land[0] - x, land[1] - y
+            d = math.hypot(dx, dy)
+            x, y = x + shift[r["nfl_id"]] * dx / d, y + shift[r["nfl_id"]] * dy / d
+        rows.append({**r, "x_pred": x, "y_pred": y, "sd_x": 0.5, "sd_y": 0.5, "fold": train.fold_of(1)})
+    pred = pl.DataFrame(rows).drop("x", "y")
+    sup = pl.DataFrame({
+        "game_id": [1], "play_id": [1], "week": [1], "home": ["KC"], "away": ["DET"], "off": ["DET"], "team": ["KC"],
+        "desc": ["pass"], "q": [1], "clock": ["15:00"], "down": [1], "dist": [10], "result": ["C"], "route": ["GO"],
+        "mz": ["zone"], "cov": ["COVER_3_ZONE"], "epa": [0.5],
+    })
+    return inp, out, pred, sup
+
+
 class FakeS3:
     """Enough of a boto3 S3 client for pull, push and push_file: an in-memory bucket."""
 

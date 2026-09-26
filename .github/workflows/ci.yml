@@ -20,6 +20,40 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pytest -q
 
+  site:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: sign in to aws as the deploy role
+        if: github.event_name == 'push' && vars.SITE_BUCKET != '' && vars.CLOUDFRONT_ID != ''
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: publish the site behind cloudfront
+        if: github.event_name == 'push' && vars.SITE_BUCKET != '' && vars.CLOUDFRONT_ID != ''
+        env:
+          SITE_BUCKET: ${{ vars.SITE_BUCKET }}
+          CLOUDFRONT_ID: ${{ vars.CLOUDFRONT_ID }}
+        run: |
+          aws s3 sync dist/ "s3://$SITE_BUCKET/app/" --delete --exclude index.html --cache-control "max-age=31536000,immutable"
+          aws s3 cp dist/index.html "s3://$SITE_BUCKET/app/index.html" --cache-control "no-cache"
+          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_ID" --paths "/index.html" "/"
+
   images:
     needs: test
     runs-on: ubuntu-latest

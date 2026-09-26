@@ -85,6 +85,19 @@ data "aws_iam_policy_document" "github_write" {
     actions   = ["s3:PutObject", "s3:DeleteObject"]
     resources = ["${aws_s3_bucket.state.arn}/*.tflock"]
   }
+  # the site: ci syncs the built app into the site bucket's app/ prefix and invalidates the distribution
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::keys-site-${data.aws_caller_identity.me.account_id}"]
+  }
+  statement {
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["arn:aws:s3:::keys-site-${data.aws_caller_identity.me.account_id}/app/*"]
+  }
+  statement {
+    actions   = ["cloudfront:CreateInvalidation"]
+    resources = ["arn:aws:cloudfront::${data.aws_caller_identity.me.account_id}:distribution/*"]
+  }
 }
 
 resource "aws_iam_role_policy" "github_write" {

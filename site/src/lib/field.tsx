@@ -51,7 +51,7 @@ export default function Field({ play, t, land, whatIf, onLand }: Props) {
     setDrag(null);
   };
   const whatIfPaths = new Map<number, number[][]>();
-  for (const q of whatIf?.predictions ?? []) {
+  for (const q of [...(whatIf?.predictions ?? [])].sort((a, b) => a.frame_id - b.frame_id)) {
     const list = whatIfPaths.get(q.nfl_id);
     if (list) list.push([q.x, q.y]);
     else whatIfPaths.set(q.nfl_id, [[q.x, q.y]]);
@@ -61,7 +61,7 @@ export default function Field({ play, t, land, whatIf, onLand }: Props) {
     <svg
       ref={svg}
       className="field"
-      viewBox={`-2 -2 ${FIELD_X + 4} ${FIELD_Y + 4}`}
+      viewBox={`-6 -6 ${FIELD_X + 12} ${FIELD_Y + 12}`}
       onPointerMove={(e) => drag && setDrag(toField(e))}
       onPointerUp={drop}
       onPointerLeave={drop}
@@ -116,7 +116,7 @@ export default function Field({ play, t, land, whatIf, onLand }: Props) {
           setDrag(toField(e));
         }}
       >
-        <circle cx={marker[0]} cy={marker[1]} r={1.8} className="landhit" />
+        <circle cx={marker[0]} cy={marker[1]} r={3} className="landhit" />
         <path
           d={`M ${marker[0] - 1} ${marker[1]} L ${marker[0]} ${marker[1] - 1} L ${marker[0] + 1} ${marker[1]} L ${marker[0]} ${marker[1] + 1} Z`}
         />

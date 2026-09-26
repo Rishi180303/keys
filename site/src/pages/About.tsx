@@ -98,7 +98,7 @@ export default function About() {
             cells.map((c, i) => (
               <tr key={`${dim}-${c.cell}`} className={c.ok ? "" : "bad"}>
                 <td>{i === 0 ? DIMS[dim] ?? dim : ""}</td>
-                <td>{label(c.cell)}</td>
+                <td>{dim === "grp" ? c.cell : label(c.cell)}</td>
                 <td>{c.n.toLocaleString()}</td>
                 <td>{signed(c.mean)}</td>
                 <td>{c.ok ? "yes" : "no"}</td>
@@ -141,8 +141,8 @@ export default function About() {
       </div>
       <h2>what it is not</h2>
       <ul>
-        <li>Not a coverage grade: the model knows the outcome of the throw before the defender moves.</li>
-        <li>Not an outcome stat: it has no relationship with completions or EPA across players.</li>
+        <li>Not a coverage grade: the model is told where and when the ball will land before the defender moves.</li>
+        <li>Not an outcome stat: across players it does not predict completions or EPA, the correlations are under 0.1.</li>
         <li>Not the whole job: anticipation before the throw is already inside the expectation and gets no credit.</li>
         <li>Not free of team: a team's scheme and its players cannot be separated with one season, so team context is inside every number.</li>
         <li>Not exact units: the model's spread is about fifteen percent too narrow, so the scale is consistent but not calibrated.</li>

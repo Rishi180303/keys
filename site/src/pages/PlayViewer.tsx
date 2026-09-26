@@ -29,6 +29,7 @@ export default function PlayViewer() {
   useEffect(() => {
     let stale = false;
     setGame(null);
+    setError(null);
     setT(0);
     setPlaying(false);
     setLand(null);
@@ -134,7 +135,7 @@ export default function PlayViewer() {
             <th>expected at arrival</th>
             <th>actual at arrival</th>
             <th>yards closer</th>
-            <th>rating</th>
+            <th>over expected</th>
           </tr>
         </thead>
         <tbody>
@@ -178,7 +179,7 @@ export default function PlayViewer() {
         >
           reset
         </button>
-        <span className="status">
+        <span className="status" aria-live="polite">
           {whatIf.busy ? "asking the model" : whatIf.error ? whatIf.error : whatIf.result ? `model ${whatIf.result.model}` : ""}
         </span>
       </div>

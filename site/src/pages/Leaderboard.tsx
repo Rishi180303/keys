@@ -132,12 +132,12 @@ export default function Leaderboard() {
         <thead>
           <tr>
             <th>player</th>
-            <th>team</th>
+            <th>teams</th>
             <th>plays</th>
             <th>rating</th>
             <th>tier</th>
             <th>yards closer</th>
-            <th>completions allowed</th>
+            <th>completion rate</th>
             <th>EPA per play</th>
           </tr>
         </thead>
@@ -146,7 +146,18 @@ export default function Leaderboard() {
             <Fragment key={p.id}>
               <tr className={`row ${p.tier}`} onClick={() => setOpen(open === p.id ? null : p.id)}>
                 <td>
-                  {p.name} <span className="pos">{p.pos}</span>
+                  <button
+                    type="button"
+                    className="expand"
+                    aria-expanded={open === p.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(open === p.id ? null : p.id);
+                    }}
+                  >
+                    {p.name}
+                  </button>{" "}
+                  <span className="pos">{p.pos}</span>
                 </td>
                 <td>{p.teams.map((t) => t.team).join(", ")}</td>
                 <td>{p.n}</td>
@@ -194,8 +205,8 @@ export default function Leaderboard() {
         {players.length} {filters.grp} with at least {filters.minPlays} rated plays. The rating is the mean of the
         per play values, shrunk toward zero with k of {k === undefined ? "?" : k.toFixed(0)} plays for this position.
         The bar is the rating plus or minus two standard errors on a scale from minus one to plus one; above and
-        below mean that interval clears zero. Completions allowed and EPA are what happened on the same plays and are
-        not what the rating measures. Click a row for the plays.
+        below mean that interval clears zero. Completion rate and EPA are what happened on the same plays; the rating
+        does not predict either. Click a row for the plays.
       </p>
     </section>
   );

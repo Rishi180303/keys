@@ -1,0 +1,398 @@
+:root {
+  --ink: #1b1f23;
+  --muted: #5b6470;
+  --line: #d9dee3;
+  --paper: #ffffff;
+  --wash: #f4f6f8;
+  --above: #1f7a3f;
+  --below: #b3261e;
+  --turf: #3e8b4d;
+  --offense: #f2c14e;
+  --defense: #2f5fd6;
+  --target: #ffffff;
+  --whatif: #d63a8a;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  line-height: 1.45;
+}
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+h1 {
+  font-size: 1.6rem;
+  margin: 0.4em 0;
+}
+h2 {
+  font-size: 1.15rem;
+  margin: 1.4em 0 0.4em;
+}
+a {
+  color: #1c4fbf;
+}
+.top {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.top .brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+.top nav a {
+  margin-right: 16px;
+  text-decoration: none;
+  color: var(--muted);
+}
+.top nav a.active {
+  color: var(--ink);
+  font-weight: 600;
+}
+.lede,
+.caption,
+.context,
+.legend {
+  color: var(--muted);
+}
+.error {
+  color: var(--below);
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0 8px;
+}
+.tabs button {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  background: var(--wash);
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+}
+.tabs button.on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-bottom: 12px;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.filters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filters select,
+.filters input {
+  font: inherit;
+  padding: 3px 6px;
+}
+.filters input[type="number"] {
+  width: 4.5em;
+}
+.scroll {
+  overflow-x: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+th,
+td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+.board .row {
+  cursor: pointer;
+}
+.board .row:hover {
+  background: var(--wash);
+}
+.pos {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.rating {
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  position: relative;
+  display: inline-block;
+  width: 120px;
+  height: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+  background: var(--wash);
+  border-radius: 5px;
+}
+.bar .zero {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: var(--muted);
+}
+.bar .interval {
+  position: absolute;
+  top: 2px;
+  height: 6px;
+  background: #b9c4d3;
+  border-radius: 3px;
+}
+.bar .point {
+  position: absolute;
+  top: 1px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.tier {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  background: var(--wash);
+  color: var(--muted);
+}
+.tier.above {
+  background: #dff3e6;
+  color: var(--above);
+}
+.tier.below {
+  background: #fbe3e1;
+  color: var(--below);
+}
+.plays td {
+  background: var(--wash);
+  white-space: normal;
+}
+.plays table {
+  font-size: 0.88rem;
+}
+.plays table td {
+  border-bottom: 1px solid #e8ecf0;
+}
+
+/* the play viewer */
+.crumbs {
+  color: var(--muted);
+  margin: 0;
+}
+.desc {
+  margin: 0.2em 0;
+}
+.field {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 12px 0 8px;
+  touch-action: none;
+  user-select: none;
+}
+.field .turf {
+  fill: var(--turf);
+}
+.field .endzone {
+  fill: #337a41;
+}
+.field .yard10 {
+  stroke: #ffffff;
+  stroke-width: 0.18;
+  opacity: 0.8;
+}
+.field .yard5 {
+  stroke: #ffffff;
+  stroke-width: 0.1;
+  opacity: 0.5;
+}
+.field polyline {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.field .actual {
+  stroke: #ffffff;
+  stroke-width: 0.35;
+}
+.field .expected {
+  stroke: #111;
+  stroke-width: 0.3;
+  stroke-dasharray: 0.8 0.6;
+}
+.field .spread {
+  fill: rgba(0, 0, 0, 0.12);
+  stroke: #111;
+  stroke-width: 0.1;
+  stroke-dasharray: 0.4 0.4;
+}
+.field .whatif {
+  stroke: var(--whatif);
+  stroke-width: 0.35;
+  stroke-dasharray: 0.8 0.6;
+}
+.field .player circle {
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 0.12;
+}
+.field .offense circle {
+  fill: var(--offense);
+}
+.field .defense circle {
+  fill: var(--defense);
+}
+.field .predicted circle {
+  stroke: #ffffff;
+  stroke-width: 0.3;
+}
+.field .held {
+  opacity: 0.45;
+}
+.field .target circle {
+  fill: var(--target);
+  stroke: var(--offense);
+}
+.field .player text {
+  font-size: 1.5px;
+  fill: #ffffff;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 0.3;
+  pointer-events: none;
+}
+.field .land path {
+  fill: #8b4513;
+  stroke: #ffffff;
+  stroke-width: 0.15;
+}
+.field .land .landhit {
+  fill: transparent;
+}
+.field .land.draggable {
+  cursor: grab;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.controls input[type="range"] {
+  flex: 1;
+}
+button {
+  font: inherit;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--wash);
+  cursor: pointer;
+}
+.legend {
+  font-size: 0.85rem;
+}
+.sw {
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  border-top: 3px solid;
+  margin: 0 4px 0 10px;
+  vertical-align: middle;
+}
+.sw.actual {
+  border-color: #9aa5b1;
+}
+.sw.expected {
+  border-color: #111;
+  border-top-style: dashed;
+}
+.sw.whatif {
+  border-color: var(--whatif);
+  border-top-style: dashed;
+}
+.sw.ball {
+  border: none;
+  width: 10px;
+  height: 10px;
+  background: #8b4513;
+  transform: rotate(45deg);
+}
+.card {
+  margin-top: 8px;
+}
+.card .excluded {
+  color: var(--muted);
+}
+.whatif {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--wash);
+  border-radius: 8px;
+}
+.whatif h2 {
+  margin-top: 0;
+}
+.whatif label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+}
+.whatif .status {
+  margin-left: 12px;
+  color: var(--muted);
+}
+.pager {
+  display: flex;
+  justify-content: space-between;
+}
+.about p,
+.about li {
+  max-width: 78ch;
+}
+.checks td:nth-child(3),
+.checks td:nth-child(4) {
+  font-variant-numeric: tabular-nums;
+}
+.checks .bad {
+  color: var(--below);
+}
+@media (max-width: 700px) {
+  th,
+  td {
+    padding: 4px 6px;
+    font-size: 0.85rem;
+  }
+  .bar {
+    width: 70px;
+  }
+}

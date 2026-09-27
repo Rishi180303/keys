@@ -4,7 +4,7 @@ I am building a machine learning project on NFL tracking data from the 2026 Big 
 
 Here is the idea. The moment a quarterback lets the ball go, the targeted receiver and the defenders closest to the play all start moving toward the spot where it will land. The NFL records every player ten times a second. This project trains a model to predict those paths from the throw until the ball arrives.
 
-The model does three jobs. It sits behind an API that takes a play and returns predicted paths. It gives every defender a rating by comparing what the defender actually did with what the model expected. And it feeds a website where you can watch real plays next to the model's guesses.
+The model does three jobs. It sits behind an API that takes a play and returns predicted paths. It gives every defender a rating by comparing what the defender actually did with what the model expected. And it feeds a website where you can watch real plays next to the model's guesses. The website is live at https://d2i4e06jgm34jr.cloudfront.net.
 
 The stack is Python, PyTorch and Terraform, and everything runs on AWS.
 
@@ -18,7 +18,7 @@ The API takes one play and returns a predicted path for every player the play fl
 
 Send a POST to /predict with a JSON body of the form {"rows": [...]}. Each row is one player at one frame before the throw, with the same 23 columns as the Kaggle input files. The reply names the model and holds one entry per predicted player and frame: nfl_id, frame_id, x, y, sd_x and sd_y. A request the API cannot use gets a 400 and a short message saying what is wrong.
 
-The address is not public yet. The website will use it once it exists, and the rating below already does.
+The easiest way to try it is the what if tool on the website.
 
 ## rating
 
@@ -30,7 +30,7 @@ The rating is computed inside the pipeline after the model is published, and it 
 
 The website is a small React app on CloudFront. It reads three kinds of files the pipeline writes: one table with every rated defender play, one file per game with every player's tracking frames and the model's expected paths, and a meta file with the checks. The leaderboard is computed in the browser from the play table, so any combination of position, coverage, route, role and team works without a server. The play viewer draws a play frame by frame with the actual paths next to the expected ones. The what if tool lets you drag the landing spot or change the air time and asks the live API what the model would expect instead.
 
-To run it locally, put the site data's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format and the rows the what if tool sends to the API.
+To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format and the rows the what if tool sends to the API.
 
 ## data
 

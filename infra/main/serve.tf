@@ -61,7 +61,9 @@ resource "aws_ecr_repository_policy" "keys" {
   policy     = data.aws_iam_policy_document.ecr_lambda.json
 }
 
-# no reserved concurrency: the account allows 10 concurrent executions and lambda keeps all 10 unreserved
+# no reserved concurrency: the account allows 10 concurrent executions and lambda keeps all 10 unreserved.
+# 90 s leaves room for a ping that starts a new container, loads the model and runs a play (about 27 s, and init
+# alone takes 25 to 30 s right after a new image); api requests are still cut off by the gateway at 30 s
 resource "aws_lambda_function" "predict" {
   function_name = "keys-predict"
   role          = aws_iam_role.predict.arn
@@ -69,7 +71,7 @@ resource "aws_lambda_function" "predict" {
   image_uri     = "${local.image}-serve"
   architectures = ["x86_64"]
   memory_size   = 2048
-  timeout       = 30
+  timeout       = 90
   environment {
     variables = { KEYS_ARTIFACTS_BUCKET = local.art_b }
   }
@@ -134,6 +136,12 @@ resource "aws_cloudwatch_event_target" "warm" {
   rule  = aws_cloudwatch_event_rule.warm.name
   arn   = aws_lambda_function.predict.arn
   input = jsonencode({ warm = true })
+}
+
+# eventbridge invokes the function asynchronously and would retry a failed ping twice; the next ping is five minutes away
+resource "aws_lambda_function_event_invoke_config" "predict" {
+  function_name          = aws_lambda_function.predict.function_name
+  maximum_retry_attempts = 0
 }
 
 resource "aws_lambda_permission" "warm" {
@@ -208,6 +216,20 @@ resource "aws_cloudwatch_dashboard" "keys" {
             for m in ["ExecutionsStarted", "ExecutionsSucceeded", "ExecutionsFailed", "ExecutionsTimedOut"] :
             ["AWS/States", m, "StateMachineArn", aws_sfn_state_machine.pipeline.arn]
           ]
+        }
+      },
+      {
+        type = "metric", x = 0, y = 12, width = 12, height = 6
+        properties = {
+          title   = "lambda errors, pings included", region = var.region, stat = "Sum", period = 300
+          metrics = [["AWS/Lambda", "Errors", "FunctionName", aws_lambda_function.predict.function_name]]
+        }
+      },
+      {
+        type = "metric", x = 12, y = 12, width = 12, height = 6
+        properties = {
+          title   = "lambda duration, max ms", region = var.region, stat = "Maximum", period = 300
+          metrics = [["AWS/Lambda", "Duration", "FunctionName", aws_lambda_function.predict.function_name]]
         }
       },
     ]

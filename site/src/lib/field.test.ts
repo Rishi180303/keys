@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { frameCount, inputFrames, positionAt } from "./field";
+import { clampSpot, FIELD_X, FIELD_Y, frameCount, inputFrames, positionAt } from "./field";
 import type { GamePlayer, Play } from "./types";
 
 const player = (over: Partial<GamePlayer>): GamePlayer => ({
@@ -22,5 +22,14 @@ describe("frameCount", () => {
     const play = { nfo: 6, players: [player({}), player({ id: 2, in: [[0, 0, 0, 0, 0, 0]] })] } as unknown as Play;
     expect(inputFrames(play)).toBe(2);
     expect(frameCount(play)).toBe(8);
+  });
+});
+
+describe("clampSpot", () => {
+  it("keeps a dragged or typed landing spot within five yards of the field", () => {
+    expect(clampSpot(-9, FIELD_X)).toBe(-5);
+    expect(clampSpot(130, FIELD_X)).toBe(FIELD_X + 5);
+    expect(clampSpot(20.5, FIELD_Y)).toBe(20.5);
+    expect(clampSpot(60, FIELD_Y)).toBe(FIELD_Y + 5);
   });
 });

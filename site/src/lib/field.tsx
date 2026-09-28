@@ -7,6 +7,9 @@ export const FIELD_Y = 53.3;
 /** The model predicts forty frames; anything past that is the frame forty prediction held still. */
 export const HORIZON = 40;
 
+/** A landing spot coordinate, dragged or typed, kept within five yards of the field. */
+export const clampSpot = (v: number, hi: number) => Math.min(Math.max(v, -5), hi + 5);
+
 /** Where a player is at frame t: his input frames, then his actual frames if he was predicted, else held. */
 export function positionAt(p: GamePlayer, t: number): [number, number] {
   const n = p.in.length;
@@ -43,8 +46,7 @@ export default function Field({ play, t, land, whatIf, onLand }: Props) {
   const [drag, setDrag] = useState<[number, number] | null>(null);
   const toField = (e: PointerEvent<SVGElement>): [number, number] => {
     const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.current!.getScreenCTM()!.inverse());
-    const clamp = (v: number, hi: number) => Math.min(Math.max(v, -5), hi + 5);
-    return [Math.round(clamp(pt.x, FIELD_X) * 100) / 100, Math.round(clamp(pt.y, FIELD_Y) * 100) / 100];
+    return [Math.round(clampSpot(pt.x, FIELD_X) * 100) / 100, Math.round(clampSpot(pt.y, FIELD_Y) * 100) / 100];
   };
   const drop = () => {
     if (drag && onLand) onLand(drag);

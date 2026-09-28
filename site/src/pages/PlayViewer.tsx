@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { apiRows, predict, type Prediction } from "../lib/api";
 import { loadGame, loadMeta } from "../lib/data";
-import Field, { frameCount, inputFrames } from "../lib/field";
+import Field, { clampSpot, FIELD_X, FIELD_Y, frameCount, inputFrames } from "../lib/field";
 import type { Game, Meta } from "../lib/types";
 import { signed } from "./Leaderboard";
 
@@ -98,6 +98,14 @@ export default function PlayViewer() {
   const prev = game.plays[index - 1];
   const next = game.plays[index + 1];
   const air = nfo ?? play.nfo;
+  const spot = land ?? play.land;
+  // the keyboard way to move the landing spot, clamped like a drag
+  const move = (i: 0 | 1, v: number) => {
+    if (Number.isNaN(v)) return;
+    const next: [number, number] = [spot[0], spot[1]];
+    next[i] = clampSpot(v, i === 0 ? FIELD_X : FIELD_Y);
+    setLand(next);
+  };
 
   return (
     <section className="viewer">
@@ -112,7 +120,7 @@ export default function PlayViewer() {
         Q{play.q} {play.clock}, {ordinal(play.down)} and {play.dist}. {label(play.cov)} against a {label(play.route)}{" "}
         route, {(play.nfo / 10).toFixed(1)} seconds in the air.
       </p>
-      <Field play={play} t={t} land={land ?? play.land} whatIf={whatIf.result} onLand={setLand} />
+      <Field play={play} t={t} land={spot} whatIf={whatIf.result} onLand={setLand} />
       <div className="controls">
         <button onClick={() => setPlaying(!playing)}>{playing ? "pause" : "play"}</button>
         <input
@@ -168,14 +176,38 @@ export default function PlayViewer() {
       <div className="whatif">
         <h2>what if</h2>
         <p>
-          Drag the landing spot, or change the air time, and the live model draws where it would expect every flagged
-          player to be. The model that answers is the published one, so its path for the real spot can differ a little
+          Drag the landing spot or type where it lands, or change the air time, and the live model draws where it
+          would expect every flagged player to be. The model that answers is the published one, so its path for the real spot can differ a little
           from the cross fitted path above.
         </p>
         <label>
           air time
           <input type="range" min={5} max={40} value={air} onChange={(e) => setNfo(Number(e.target.value))} />
           {(air / 10).toFixed(1)} s
+        </label>
+        <label>
+          lands at x
+          <input
+            type="number"
+            aria-label="landing spot, yards along the field"
+            step={0.5}
+            min={-5}
+            max={FIELD_X + 5}
+            value={spot[0]}
+            onChange={(e) => move(0, e.target.valueAsNumber)}
+          />
+        </label>
+        <label>
+          y
+          <input
+            type="number"
+            aria-label="landing spot, yards across the field"
+            step={0.5}
+            min={-5}
+            max={FIELD_Y + 5}
+            value={spot[1]}
+            onChange={(e) => move(1, e.target.valueAsNumber)}
+          />
         </label>
         <button
           onClick={() => {

@@ -382,6 +382,9 @@ button {
   gap: 8px;
   margin-right: 12px;
 }
+.whatif input[type="number"] {
+  width: 5em;
+}
 .whatif .status {
   margin-left: 12px;
   color: var(--muted);

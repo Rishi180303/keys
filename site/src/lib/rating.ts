@@ -102,10 +102,12 @@ export function ratePlayers(rows: PlayRow[], shrink: Shrink, minPlays: number): 
   return out.sort((a, b) => b.rating - a.rating || a.id - b.id);
 }
 
-/** One row per defensive team: mean and standard error, no shrinkage, the same as keys/rate.py teams(). */
-export function rateTeams(rows: PlayRow[]): TeamRating[] {
+/** One row per defensive team with at least minPlays defender plays: mean and standard error, no shrinkage,
+ * the same as keys/rate.py teams(). The pooled variance still uses every row. */
+export function rateTeams(rows: PlayRow[], minPlays: number): TeamRating[] {
   const within = variance(rows.map((r) => r.zc));
   return [...groupBy(rows, (r) => r.team)]
+    .filter(([, list]) => list.length >= minPlays)
     .map(([team, list]) => ({ team, n: list.length, mean: mean(list.map((r) => r.zc)), se: Math.sqrt(within / list.length) }))
     .sort((a, b) => b.mean - a.mean || a.team.localeCompare(b.team));
 }

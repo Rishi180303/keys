@@ -314,6 +314,14 @@ th {
 .field .land.draggable {
   cursor: grab;
 }
+/* the marker takes the keyboard focus; a white ring shows it has it */
+.field .land:focus {
+  outline: none;
+}
+.field .land:focus .landhit {
+  stroke: #ffffff;
+  stroke-width: 0.3;
+}
 .controls {
   display: flex;
   align-items: center;
@@ -367,25 +375,22 @@ button {
 .card .excluded {
   color: var(--muted);
 }
-.whatif {
+.whatif-panel {
   margin-top: 16px;
   padding: 12px;
   background: var(--wash);
   border-radius: 8px;
 }
-.whatif h2 {
+.whatif-panel h2 {
   margin-top: 0;
 }
-.whatif label {
+.whatif-panel label {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   margin-right: 12px;
 }
-.whatif input[type="number"] {
-  width: 5em;
-}
-.whatif .status {
+.whatif-panel .status {
   margin-left: 12px;
   color: var(--muted);
 }

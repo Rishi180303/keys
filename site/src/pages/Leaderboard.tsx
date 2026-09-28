@@ -10,9 +10,9 @@ export const signed = (v: number, d = 2) => (v < 0 ? "−" : "+") + Math.abs(v).
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const label = (s: string) => s.replace(/_/g, " ").toLowerCase();
 
-/** The rating with its interval, rating plus or minus two standard errors, on a fixed scale from -span to +span. */
-function Bar({ rating, se, span = 1 }: { rating: number; se: number; span?: number }) {
-  const x = (v: number) => Math.min(100, Math.max(0, ((v + span) / span) * 50));
+/** The rating with its interval, rating plus or minus two standard errors, on a fixed scale from -1 to +1. */
+function Bar({ rating, se }: { rating: number; se: number }) {
+  const x = (v: number) => Math.min(100, Math.max(0, (v + 1) * 50));
   const lo = x(rating - 2 * se);
   return (
     <span className="bar" aria-hidden="true">
@@ -49,9 +49,9 @@ export default function Leaderboard() {
     () => (rows && meta && !teamView ? ratePlayers(applyFilters(rows, filters), meta.shrink, filters.minPlays) : []),
     [rows, meta, filters, teamView],
   );
-  // the team view keeps the coverage, route and role filters and takes every position group together
+  // the team view keeps the coverage, route, role and minimum plays filters and takes every position group together
   const teams = useMemo(
-    () => (rows && teamView ? rateTeams(applyFilters(rows, { ...filters, grp: "any", team: "any" })) : []),
+    () => (rows && teamView ? rateTeams(applyFilters(rows, { ...filters, grp: "any", team: "any" }), filters.minPlays) : []),
     [rows, filters, teamView],
   );
 
@@ -113,30 +113,28 @@ export default function Leaderboard() {
           </select>
         </label>
         {!teamView && (
-          <>
-            <label>
-              team
-              <select value={filters.team} onChange={(e) => set({ team: e.target.value })}>
-                <option value="any">any</option>
-                {options.team.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              at least
-              <input
-                type="number"
-                min={1}
-                value={filters.minPlays}
-                onChange={(e) => set({ minPlays: Math.max(1, Number(e.target.value) || 1) })}
-              />
-              plays
-            </label>
-          </>
+          <label>
+            team
+            <select value={filters.team} onChange={(e) => set({ team: e.target.value })}>
+              <option value="any">any</option>
+              {options.team.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
+        <label>
+          at least
+          <input
+            type="number"
+            min={1}
+            value={filters.minPlays}
+            onChange={(e) => set({ minPlays: Math.max(1, Number(e.target.value) || 1) })}
+          />
+          {teamView ? "defender plays" : "plays"}
+        </label>
       </div>
       {teamView && (
         <>
@@ -145,7 +143,7 @@ export default function Leaderboard() {
               <thead>
                 <tr>
                   <th>team</th>
-                  <th>plays</th>
+                  <th>defender plays</th>
                   <th>rating</th>
                   <th>tier</th>
                 </tr>
@@ -154,11 +152,11 @@ export default function Leaderboard() {
                 {teams.map((t) => {
                   const tier = tierOf(t.mean, t.se);
                   return (
-                    <tr key={t.team} className={`row ${tier}`}>
+                    <tr key={t.team} className={tier}>
                       <td>{t.team}</td>
                       <td>{t.n}</td>
                       <td className="rating">
-                        {signed(t.mean)} <Bar rating={t.mean} se={t.se} span={0.5} />
+                        {signed(t.mean)} <Bar rating={t.mean} se={t.se} />
                       </td>
                       <td>
                         <span className={`tier ${tier}`}>{tier}</span>
@@ -170,10 +168,10 @@ export default function Leaderboard() {
             </table>
           </div>
           <p className="caption">
-            {teams.length} teams. A team's number is the plain mean of the per play values of its flagged defenders, every
-            position together, on the plays the filters keep, with no shrinkage. The bar is that mean plus or minus two
-            standard errors on a scale from minus one half to plus one half; above and below mean that interval clears
-            zero. A team's scheme and its players cannot be told apart in one season, so this is both.
+            {teams.length} teams with at least {filters.minPlays} defender plays. A team's number is the plain mean of
+            the per play values of its flagged defenders, every position together, on the plays the filters keep, with
+            no shrinkage. The bar is that mean plus or minus two standard errors on a scale from minus one to plus one;
+            above and below mean that interval clears zero. A team's scheme and its players cannot be told apart in one season, so this is both.
           </p>
         </>
       )}

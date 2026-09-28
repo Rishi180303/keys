@@ -7,8 +7,24 @@ export const FIELD_Y = 53.3;
 /** The model predicts forty frames; anything past that is the frame forty prediction held still. */
 export const HORIZON = 40;
 
-/** A landing spot coordinate, dragged or typed, kept within five yards of the field. */
+/** A landing spot coordinate, dragged or moved with the keys, kept within five yards of the field. */
 export const clampSpot = (v: number, hi: number) => Math.min(Math.max(v, -5), hi + 5);
+/** A spot clamped and rounded to a hundredth of a yard. */
+const snap = (x: number, y: number): [number, number] => [
+  Math.round(clampSpot(x, FIELD_X) * 100) / 100,
+  Math.round(clampSpot(y, FIELD_Y) * 100) / 100,
+];
+
+const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+/** The spot an arrow key moves the landing marker to, half a yard or five with shift; screen up is smaller y.
+ * Any other key gives null. */
+export function nudge(spot: [number, number], key: string, shift: boolean): [number, number] | null {
+  const d = ARROWS[key];
+  if (!d) return null;
+  const step = shift ? 5 : 0.5;
+  return snap(spot[0] + d[0] * step, spot[1] + d[1] * step);
+}
 
 /** Where a player is at frame t: his input frames, then his actual frames if he was predicted, else held. */
 export function positionAt(p: GamePlayer, t: number): [number, number] {
@@ -37,7 +53,7 @@ type Props = {
   t: number;
   land: [number, number];
   whatIf?: Prediction | null;
-  /** When given, the landing marker can be dragged and this receives the spot on drop. */
+  /** When given, the landing marker can be dragged or moved with the arrow keys and this receives each new spot. */
   onLand?: (xy: [number, number]) => void;
 };
 
@@ -46,7 +62,7 @@ export default function Field({ play, t, land, whatIf, onLand }: Props) {
   const [drag, setDrag] = useState<[number, number] | null>(null);
   const toField = (e: PointerEvent<SVGElement>): [number, number] => {
     const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.current!.getScreenCTM()!.inverse());
-    return [Math.round(clampSpot(pt.x, FIELD_X) * 100) / 100, Math.round(clampSpot(pt.y, FIELD_Y) * 100) / 100];
+    return snap(pt.x, pt.y);
   };
   const drop = () => {
     if (drag && onLand) onLand(drag);
@@ -112,10 +128,20 @@ export default function Field({ play, t, land, whatIf, onLand }: Props) {
       })}
       <g
         className={`land ${onLand ? "draggable" : ""}`}
+        tabIndex={onLand ? 0 : undefined}
+        aria-label={onLand ? `landing spot, x ${land[0].toFixed(1)} y ${land[1].toFixed(1)} yards, arrow keys move it` : undefined}
         onPointerDown={(e) => {
           if (!onLand) return;
           e.currentTarget.setPointerCapture(e.pointerId);
           setDrag(toField(e));
+        }}
+        onKeyDown={(e) => {
+          // alt, ctrl and cmd arrows keep their browser meaning, like going back
+          const next = onLand && !e.altKey && !e.ctrlKey && !e.metaKey && nudge(land, e.key, e.shiftKey);
+          if (!onLand || !next) return;
+          // arrow keys would scroll the page otherwise
+          e.preventDefault();
+          onLand(next);
         }}
       >
         <circle cx={marker[0]} cy={marker[1]} r={3} className="landhit" />

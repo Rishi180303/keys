@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampSpot, FIELD_X, FIELD_Y, frameCount, inputFrames, positionAt } from "./field";
+import { clampSpot, FIELD_X, FIELD_Y, frameCount, inputFrames, nudge, positionAt } from "./field";
 import type { GamePlayer, Play } from "./types";
 
 const player = (over: Partial<GamePlayer>): GamePlayer => ({
@@ -25,8 +25,22 @@ describe("frameCount", () => {
   });
 });
 
+describe("nudge", () => {
+  it("moves half a yard per arrow, five with shift, up is smaller y", () => {
+    expect(nudge([64.5, 20], "ArrowRight", false)).toEqual([65, 20]);
+    expect(nudge([64.5, 20], "ArrowLeft", true)).toEqual([59.5, 20]);
+    expect(nudge([64.5, 20], "ArrowUp", false)).toEqual([64.5, 19.5]);
+    expect(nudge([64.37, 20], "ArrowDown", true)).toEqual([64.37, 25]);
+  });
+  it("clamps like a drag and ignores other keys", () => {
+    expect(nudge([FIELD_X + 4, 1], "ArrowRight", true)).toEqual([FIELD_X + 5, 1]);
+    expect(nudge([10, -4.8], "ArrowUp", false)).toEqual([10, -5]);
+    expect(nudge([10, 10], "Enter", false)).toBeNull();
+  });
+});
+
 describe("clampSpot", () => {
-  it("keeps a dragged or typed landing spot within five yards of the field", () => {
+  it("keeps a dragged or keyed landing spot within five yards of the field", () => {
     expect(clampSpot(-9, FIELD_X)).toBe(-5);
     expect(clampSpot(130, FIELD_X)).toBe(FIELD_X + 5);
     expect(clampSpot(20.5, FIELD_Y)).toBe(20.5);

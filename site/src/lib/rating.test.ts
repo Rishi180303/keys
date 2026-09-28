@@ -68,11 +68,15 @@ describe("applyFilters", () => {
 describe("rateTeams", () => {
   it("means and standard errors with the pooled variance", () => {
     const rows = [1, 3, 1, 3].map((zc, i) => row({ play: i, team: "KC", zc })).concat([-1, -3, -1, -3].map((zc, i) => row({ play: 10 + i, team: "DET", zc })));
-    const t = rateTeams(rows);
+    const t = rateTeams(rows, 1);
     expect(t.map((x) => x.team)).toEqual(["KC", "DET"]);
     expect(t[0].mean).toBe(2);
     expect(t[1].mean).toBe(-2);
     expect(t[0].se).toBeCloseTo(Math.sqrt(variance(rows.map((r) => r.zc)) / 4));
+  });
+  it("drops teams under the minimum plays", () => {
+    const rows = [1, 3, 1, 3].map((zc, i) => row({ play: i, team: "KC", zc })).concat([row({ play: 10, team: "DET", zc: 9 })]);
+    expect(rateTeams(rows, 2).map((x) => x.team)).toEqual(["KC"]);
   });
 });
 

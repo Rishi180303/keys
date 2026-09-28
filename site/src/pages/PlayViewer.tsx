@@ -10,8 +10,10 @@ const ordinal = (n: number) => `${n}${["th", "st", "nd", "rd"][n % 10 < 4 && Mat
 const label = (s: string) => s.replace(/_/g, " ").toLowerCase();
 const outcome = (r: string) => (r === "C" ? "complete" : r === "I" ? "incomplete" : "intercepted");
 
-type WhatIf = { result: Prediction | null; error: string | null; busy: boolean };
-const idle: WhatIf = { result: null, error: null, busy: false };
+type WhatIf = { result: Prediction | null; error: string | null; busy: boolean; slow: boolean };
+const idle: WhatIf = { result: null, error: null, busy: false, slow: false };
+/** After this long the status says the model may be waking up, which takes up to half a minute after a deploy. */
+const SLOW_MS = 3000;
 
 export default function PlayViewer() {
   const params = useParams();
@@ -59,27 +61,32 @@ export default function PlayViewer() {
     return () => clearInterval(id);
   }, [playing, frames]);
 
-  // the what if request goes out on a dropped marker or a changed air time, never while dragging, debounced
+  // the what if request goes out on a dropped marker or a changed air time, never while dragging, debounced;
+  // a newer spot, a reset or leaving the play aborts the request in flight
   useEffect(() => {
     if (!game || !play || !meta || (land === null && nfo === null)) return;
     if (!meta.api_url) {
-      setWhatIf({ result: null, error: "this data has no api address", busy: false });
+      setWhatIf({ ...idle, error: "this data has no api address" });
       return;
     }
-    let stale = false;
+    const ctl = new AbortController();
+    let slow: ReturnType<typeof setTimeout> | undefined;
     const timer = setTimeout(() => {
-      setWhatIf((w) => ({ ...w, busy: true, error: null }));
-      predict(meta.api_url, apiRows(game, play, land ?? play.land, nfo ?? play.nfo))
+      setWhatIf((w) => ({ ...w, busy: true, slow: false, error: null }));
+      slow = setTimeout(() => setWhatIf((w) => (w.busy ? { ...w, slow: true } : w)), SLOW_MS);
+      predict(meta.api_url, apiRows(game, play, land ?? play.land, nfo ?? play.nfo), ctl.signal)
         .then((result) => {
-          if (!stale) setWhatIf({ result, error: null, busy: false });
+          if (!ctl.signal.aborted) setWhatIf({ ...idle, result });
         })
         .catch((e: Error) => {
-          if (!stale) setWhatIf({ result: null, error: e.message, busy: false });
-        });
+          if (!ctl.signal.aborted) setWhatIf({ ...idle, error: e.message });
+        })
+        .finally(() => clearTimeout(slow));
     }, 300);
     return () => {
-      stale = true;
+      ctl.abort();
       clearTimeout(timer);
+      clearTimeout(slow);
     };
   }, [game, play, meta, land, nfo]);
 
@@ -180,7 +187,15 @@ export default function PlayViewer() {
           reset
         </button>
         <span className="status" aria-live="polite">
-          {whatIf.busy ? "asking the model" : whatIf.error ? whatIf.error : whatIf.result ? `model ${whatIf.result.model}` : ""}
+          {whatIf.busy
+            ? whatIf.slow
+              ? "still asking, the model can take up to half a minute to wake up"
+              : "asking the model"
+            : whatIf.error
+              ? whatIf.error
+              : whatIf.result
+                ? `model ${whatIf.result.model}`
+                : ""}
         </span>
       </div>
       <p className="pager">

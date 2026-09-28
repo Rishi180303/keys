@@ -42,14 +42,17 @@ export function apiRows(game: Game, play: Play, land: [number, number] = play.la
   return rows;
 }
 
-/** POST one play to the prediction api. A 400 carries the api's own message. */
-export async function predict(apiUrl: string, rows: ApiRow[]): Promise<Prediction> {
+/** POST one play to the prediction api. A 400 carries the api's own message; a 503 or 504 without one is the
+ * api giving up after 30 seconds, which a model still waking up can hit. */
+export async function predict(apiUrl: string, rows: ApiRow[], signal?: AbortSignal): Promise<Prediction> {
   const res = await fetch(apiUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ rows }),
+    signal,
   });
   const body = (await res.json().catch(() => ({}))) as Partial<Prediction> & { error?: string };
-  if (!res.ok || !body.predictions) throw new Error(body.error ?? `the api answered ${res.status}`);
-  return body as Prediction;
+  if (res.ok && body.predictions) return body as Prediction;
+  const late = res.status === 503 || res.status === 504;
+  throw new Error(body.error ?? (late ? "the model took too long to wake up, try again" : `the api answered ${res.status}`));
 }

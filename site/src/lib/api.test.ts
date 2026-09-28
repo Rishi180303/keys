@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { apiRows } from "./api";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { apiRows, predict } from "./api";
 import type { Game, Play } from "./types";
 
 const play: Play = {
@@ -25,5 +25,26 @@ describe("apiRows", () => {
   it("replaces the landing spot and the air time for the what if tool", () => {
     const rows = apiRows(game, play, [70, 30.5], 12);
     expect(rows.every((r) => r.ball_land_x === 70 && r.ball_land_y === 30.5 && r.num_frames_output === 12)).toBe(true);
+  });
+});
+
+describe("predict", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const answer = (status: number, body: unknown) =>
+    vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify(body), { status }));
+  it("passes the abort signal to fetch and returns the predictions", async () => {
+    const fetch = answer(200, { model: "m", predictions: [] });
+    vi.stubGlobal("fetch", fetch);
+    const ctl = new AbortController();
+    await expect(predict("https://x.invalid/predict", [], ctl.signal)).resolves.toEqual({ model: "m", predictions: [] });
+    expect(fetch.mock.calls[0][1].signal).toBe(ctl.signal);
+  });
+  it("keeps the api's message, and names a timeout when there is none", async () => {
+    vi.stubGlobal("fetch", answer(400, { error: "body must be rows" }));
+    await expect(predict("u", [])).rejects.toThrow("body must be rows");
+    vi.stubGlobal("fetch", answer(503, { message: "Service Unavailable" }));
+    await expect(predict("u", [])).rejects.toThrow("the model took too long to wake up, try again");
+    vi.stubGlobal("fetch", answer(500, {}));
+    await expect(predict("u", [])).rejects.toThrow("the api answered 500");
   });
 });

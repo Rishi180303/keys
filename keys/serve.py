@@ -21,6 +21,20 @@ TYPES = {
     "dir": pl.Float64, "o": pl.Float64, "ball_land_x": pl.Float64, "ball_land_y": pl.Float64,
 }
 SCHEMA = {c: TYPES.get(c, pl.String) for c in data.INPUT_COLUMNS}
+# a three player play the keep warm ping runs through the whole request path on a container with no model yet
+WARM_ROWS = [
+    {
+        "game_id": 0, "play_id": 0, "player_to_predict": role != "Passer", "nfl_id": i, "frame_id": 1,
+        "play_direction": "right", "absolute_yardline_number": 50, "player_name": role, "player_height": "6-0",
+        "player_weight": 200, "player_birth_date": "2000-01-01", "player_position": pos, "player_side": side,
+        "player_role": role, "x": x, "y": 25.0, "s": 4.0, "a": 0.0, "dir": 90.0, "o": 90.0, "num_frames_output": 10,
+        "ball_land_x": 60.0, "ball_land_y": 25.0,
+    }
+    for i, (role, pos, side, x) in enumerate(
+        [("Passer", "QB", "Offense", 40.0), ("Targeted Receiver", "WR", "Offense", 55.0), ("Defensive Coverage", "CB", "Defense", 57.0)],
+        start=1,
+    )
+]
 log = logging.getLogger(__name__)
 _cache = {}
 
@@ -92,9 +106,14 @@ def parse(event) -> list[dict]:
 def handler(event, context):
     """API Gateway HTTP API entry point, payload format 2.0, and the five minute keep warm ping."""
     if event.get("warm"):
-        # the ping keeps this container alive; drop the cached model once a newer run is published
+        # the ping keeps this container alive with the published model ready. On a container with no model it
+        # loads one and runs a small play through it: that first run, not the container start, is what made a
+        # new container's first real request take about 27 s (2026-09-27), and lambda replaces containers often
         if _cache.get("version") != published():
             _cache.clear()
+        if "model" not in _cache:
+            model, _ = active_model()
+            train.predict(model, parse({"body": json.dumps({"rows": WARM_ROWS})}), torch.device("cpu"))
         return {"statusCode": 204}
     try:
         plays = parse(event)

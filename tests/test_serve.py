@@ -129,11 +129,39 @@ def test_too_many_players_is_a_400(synthetic_play, model):
     assert status == 400 and "at most 30 players" in body["error"]
 
 
-def test_warm_ping_drops_a_model_that_is_no_longer_published(monkeypatch):
-    monkeypatch.setattr(serve, "_cache", {"model": "old", "version": "models/old/fold0/model.pt"})
+@pytest.fixture
+def loader(monkeypatch):
+    """active_model on a container with no model: loads a small net for the published version into the cache."""
+    net = KeysNet(n_feat=len(tensors.FEATURES), n_static=tensors.N_STATIC, d=32, layers=1, heads=2)
     monkeypatch.setattr(serve, "published", lambda: "models/new/fold0/model.pt")
+
+    def load():
+        serve._cache.update(model=net, version=serve.published())
+        return net, serve._cache["version"]
+
+    monkeypatch.setattr(serve, "active_model", load)
+    return net
+
+
+def test_warm_ping_loads_and_runs_the_model_on_a_new_container(monkeypatch, loader):
+    monkeypatch.setattr(serve, "_cache", {})
+    runs = []
+    real = serve.train.predict
+
+    def spy(*args):
+        runs.append(real(*args))
+        return runs[-1]
+
+    monkeypatch.setattr(serve.train, "predict", spy)
     assert serve.handler({"warm": True}, CTX) == {"statusCode": 204}
-    assert serve._cache == {}
+    assert serve._cache["model"] is loader and len(runs) == 1
+    assert sorted(runs[0]["nfl_id"].unique()) == [2, 3]  # the warm play passes parse and predicts like a request
+
+
+def test_warm_ping_replaces_a_model_that_is_no_longer_published(monkeypatch, loader):
+    monkeypatch.setattr(serve, "_cache", {"model": "old", "version": "models/old/fold0/model.pt"})
+    assert serve.handler({"warm": True}, CTX) == {"statusCode": 204}
+    assert serve._cache == {"model": loader, "version": "models/new/fold0/model.pt"}
 
 
 def test_warm_ping_keeps_the_current_model(monkeypatch):

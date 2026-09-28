@@ -1,0 +1,178 @@
+/* the replay: a dark stage with the canvas, a small heads up line, the arrival caption and its controls */
+.rp {
+  --rp-bg: #05070a;
+  --rp-accent: #38bdf8;
+  --rp-muted: #94a3b8;
+  --rp-display: "Barlow Condensed", system-ui, sans-serif;
+  container-type: inline-size;
+  background: var(--rp-bg);
+  border-radius: 14px;
+  overflow: hidden;
+  color: #e5e7eb;
+  outline: none;
+}
+.rp:focus-visible {
+  box-shadow: 0 0 0 2px var(--rp-accent);
+}
+/* a page can set --rp-aspect; phones held upright get a tall stage */
+@media (max-width: 640px) and (orientation: portrait) {
+  .rp-stage {
+    --rp-aspect: 9 / 14;
+  }
+}
+.rp-stage {
+  position: relative;
+  aspect-ratio: var(--rp-aspect, 16 / 9);
+}
+.rp-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+.rp-stage canvas.rp-editing {
+  cursor: grab;
+  touch-action: none;
+}
+.rp-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 56px;
+  background: linear-gradient(var(--rp-bg), rgba(5, 7, 10, 0));
+  pointer-events: none;
+  z-index: 1;
+}
+.rp-hud {
+  position: absolute;
+  z-index: 2;
+  left: 16px;
+  right: 16px;
+  top: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 600 12px/1.2 var(--rp-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(203, 213, 225, 0.75);
+  pointer-events: none;
+}
+.rp-hud b {
+  color: #fff;
+  font-weight: 700;
+}
+.rp-cap {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  max-width: calc(100% - 36px);
+  padding: 10px 16px 12px 14px;
+  border-left: 3px solid var(--rp-accent);
+  background: linear-gradient(90deg, rgba(5, 7, 10, 0.9), rgba(5, 7, 10, 0.55));
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.45s, transform 0.45s;
+  pointer-events: none;
+}
+.rp-cap.on {
+  opacity: 1;
+  transform: none;
+}
+.rp-who {
+  font: 600 13px/1.2 var(--rp-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rp-muted);
+}
+.rp-big {
+  font: 700 40px/1 var(--rp-display);
+  color: #fff;
+  margin-top: 6px;
+}
+.rp-big span {
+  color: var(--rp-accent);
+}
+.rp-line {
+  font: 500 13px/1.3 Inter, system-ui, sans-serif;
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+.rp-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+.rp-controls button {
+  font: 600 12px/1 var(--rp-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rp-muted);
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.rp-controls button:hover {
+  color: #fff;
+}
+.rp-controls button[aria-pressed="true"] {
+  color: var(--rp-bg);
+  background: #fff;
+  border-color: #fff;
+}
+.rp-controls .rp-play {
+  width: 38px;
+  color: #fff;
+}
+.rp-scrub {
+  position: relative;
+  flex: 1;
+  min-width: 80px;
+}
+.rp-scrub input {
+  width: 100%;
+  accent-color: var(--rp-accent);
+}
+.rp-tick {
+  position: absolute;
+  top: -2px;
+  width: 2px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+}
+.rp-cams {
+  display: flex;
+  gap: 4px;
+}
+/* sized by the replay's own width, so a small replay in a card adapts too */
+@container (max-width: 560px) {
+  .rp-hud span:last-child {
+    display: none;
+  }
+  .rp-cap {
+    left: 12px;
+    bottom: 12px;
+    padding: 8px 12px 9px 11px;
+  }
+  .rp-big {
+    font-size: 30px;
+  }
+  .rp-line {
+    font-size: 12px;
+  }
+  .rp-controls {
+    flex-wrap: wrap;
+  }
+  .rp-cams {
+    width: 100%;
+  }
+  .rp-cams button {
+    flex: 1;
+  }
+}

@@ -81,7 +81,10 @@ export function buildScene(play: Play, featuredId?: number): Scene {
       spread: end ? [end[3], end[2]] : null,
     };
   });
-  const passer = actors.find((a) => a.role === "passer") ?? actors[0];
+  // a few plays have no player tagged Passer: take the offensive player deepest behind the line at the throw
+  const deepest = (list: Actor[]) => list.reduce((a, b) => (b.path[nIn - 1][1] < a.path[nIn - 1][1] ? b : a));
+  const offense = actors.filter((a) => a.offense && a.role !== "target");
+  const passer = actors.find((a) => a.role === "passer") ?? (offense.length ? deepest(offense) : actors[0]);
   const defenders = actors.filter((a) => !a.offense && a.flagged);
   const primary = play.ratings.find((r) => r.role === "primary");
   const featuredWanted = featuredId ?? primary?.id;
@@ -125,15 +128,15 @@ export function ghostAt(actor: Actor, scene: Scene, frame: number): Pt | null {
 }
 
 /** The drawn ball, [across, downfield, height]: with the passer before the throw, then on a straight line to the
- * landing spot with a height of 1.6 yards at release falling to 0 plus an arc of 4 h s (1 - s),
+ * landing spot (or a what if spot) with a height of 1.6 yards at release falling to 0 plus an arc of 4 h s (1 - s),
  * h = min(9, 0.22 x throw distance). The data tracks players, not the ball. */
-export function ballAt(scene: Scene, frame: number): [number, number, number] {
+export function ballAt(scene: Scene, frame: number, land: Pt = scene.land): [number, number, number] {
   if (frame < scene.nIn - 1) {
     const [l, u] = along(scene.passer.path, frame);
     return [l, u, 1.6];
   }
   const s = airAt(scene, frame);
-  const [a, b] = [scene.throwSpot, scene.land];
+  const [a, b] = [scene.throwSpot, land];
   const h = Math.min(9, 0.22 * Math.hypot(b[0] - a[0], b[1] - a[1]));
   return [lerp(a[0], b[0], s), lerp(a[1], b[1], s), 1.6 * (1 - s) + 4 * h * s * (1 - s)];
 }

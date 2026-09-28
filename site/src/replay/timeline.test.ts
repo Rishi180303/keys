@@ -22,7 +22,10 @@ describe("makeTimeline", () => {
     for (const f of [tl.start, tl.throwFrame, tl.throwFrame + 5, tl.arriveFrame]) expect(tl.frameAt(tl.timeAt(f))).toBeCloseTo(f);
     expect(tl.frameAt(stepFrame(tl, tl.timeAt(tl.throwFrame + 3.4), 1))).toBeCloseTo(tl.throwFrame + 4);
     expect(tl.frameAt(stepFrame(tl, tl.timeAt(tl.throwFrame + 3), -1))).toBeCloseTo(tl.throwFrame + 2);
-    expect(stepFrame(tl, tl.duration, 1)).toBeCloseTo(tl.tArrive);
+    // from arrival a step forward goes to the end of the hold, where the caption shows, never backwards
+    expect(stepFrame(tl, tl.tArrive, 1)).toBeCloseTo(tl.duration);
+    expect(stepFrame(tl, tl.duration, 1)).toBeCloseTo(tl.duration);
+    expect(tl.frameAt(stepFrame(tl, tl.duration, -1))).toBeCloseTo(tl.arriveFrame - 1);
     expect(stepFrame(tl, 0, -1)).toBe(0);
   });
   it("half speed doubles the lead in and the air but not the hold", () => {

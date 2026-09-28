@@ -1,5 +1,6 @@
-import type { Viewport, View } from "./cameras";
-import { airAt, along, ballAt, FIELD_W, ghostAt, type Actor, type Pt, type Scene } from "./scene";
+import { NEAR, type Viewport, type View } from "./cameras";
+import { surname } from "./captions";
+import { airAt, along, ballAt, FIELD_W, ghostAt, type Pt, type Scene } from "./scene";
 
 export type Theme = {
   bg: string;
@@ -57,9 +58,42 @@ export type Overlays = {
 type Ctx = CanvasRenderingContext2D;
 const HASH = 23.58;
 
+const CUT = NEAR + 0.01;
+
+/** A ground segment cut where it passes behind a perspective camera, or null when all of it is behind. */
+export function clipSegment(view: View, a: Pt, b: Pt): [Pt, Pt] | null {
+  if (!view.depth) return [a, b];
+  const da = view.depth(a[0], a[1]) - CUT;
+  const db = view.depth(b[0], b[1]) - CUT;
+  if (da < 0 && db < 0) return null;
+  if (da >= 0 && db >= 0) return [a, b];
+  const t = da / (da - db);
+  const c: Pt = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  return da < 0 ? [c, b] : [a, c];
+}
+
+/** A ground polygon cut to the part in front of a perspective camera. */
+export function clipPolygon(view: View, pts: Pt[]): Pt[] {
+  if (!view.depth) return pts;
+  const out: Pt[] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const da = view.depth(a[0], a[1]) - CUT;
+    const db = view.depth(b[0], b[1]) - CUT;
+    if (da >= 0) out.push(a);
+    if (da >= 0 !== db >= 0) {
+      const t = da / (da - db);
+      out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    }
+  }
+  return out;
+}
+
 function line(ctx: Ctx, view: View, a: Pt, b: Pt) {
-  const p = view.project(a[0], a[1]);
-  const q = view.project(b[0], b[1]);
+  const seg = clipSegment(view, a, b);
+  const p = seg && view.project(seg[0][0], seg[0][1]);
+  const q = seg && view.project(seg[1][0], seg[1][1]);
   if (!p || !q) return;
   ctx.beginPath();
   ctx.moveTo(p[0], p[1]);
@@ -69,18 +103,32 @@ function line(ctx: Ctx, view: View, a: Pt, b: Pt) {
 
 function path(ctx: Ctx, view: View, pts: Pt[]) {
   ctx.beginPath();
-  let on = false;
-  for (const [l, u] of pts) {
-    const p = view.project(l, u);
-    if (!p) {
-      on = false;
+  let at: Pt | null = null;
+  for (let i = 1; i < pts.length; i++) {
+    const seg = clipSegment(view, pts[i - 1], pts[i]);
+    const p = seg && view.project(seg[0][0], seg[0][1]);
+    const q = seg && view.project(seg[1][0], seg[1][1]);
+    if (!p || !q) {
+      at = null;
       continue;
     }
-    if (on) ctx.lineTo(p[0], p[1]);
-    else ctx.moveTo(p[0], p[1]);
-    on = true;
+    if (!at || at[0] !== seg![0][0] || at[1] !== seg![0][1]) ctx.moveTo(p[0], p[1]);
+    ctx.lineTo(q[0], q[1]);
+    at = seg![1];
   }
   ctx.stroke();
+}
+
+/** Fill a ground polygon, cut to what is in front of the camera. */
+function fillGround(ctx: Ctx, view: View, pts: Pt[]) {
+  const shown = clipPolygon(view, pts)
+    .map(([l, u]) => view.project(l, u))
+    .filter((p) => p !== null);
+  if (shown.length < 3) return null;
+  ctx.beginPath();
+  shown.forEach((c, i) => (i ? ctx.lineTo(c[0], c[1]) : ctx.moveTo(c[0], c[1])));
+  ctx.closePath();
+  return shown;
 }
 
 /** A soft glow without shadowBlur: two wide faint strokes under the real one. */
@@ -127,8 +175,6 @@ function groundEllipse(ctx: Ctx, view: View, c: Pt, rl: number, ru: number) {
   return true;
 }
 
-const lastName = (a: Actor) => a.name.split(" ").slice(-1)[0].toUpperCase();
-
 /** Draw one frame of a scene as a camera sees it. */
 export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp: Viewport, theme: Theme, o: Overlays) {
   const left = scene.play.dir === "left";
@@ -141,27 +187,21 @@ export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp:
   const fu1 = Math.max(uOf(0), uOf(120));
   const u0 = Math.max(view.uMin, fu0);
   const u1 = Math.min(view.uMax, fu1);
-  const corners = [[0, u0], [FIELD_W, u0], [FIELD_W, u1], [0, u1]].map(([l, u]) => view.project(l, u));
-  if (u1 > u0 && corners.every(Boolean)) {
-    const ys = corners.map((c) => c![1]);
-    const g = ctx.createLinearGradient(0, Math.min(...ys), 0, Math.max(...ys));
+  const turf = u1 > u0 ? fillGround(ctx, view, [[0, u0], [FIELD_W, u0], [FIELD_W, u1], [0, u1]]) : null;
+  if (turf) {
+    const ys = turf.map((c) => c[1]);
+    const top = Math.max(-vp.h, Math.min(...ys));
+    const g = ctx.createLinearGradient(0, top, 0, Math.min(2 * vp.h, Math.max(top + 1, ...ys)));
     g.addColorStop(0, view.flat ? theme.turfNear : theme.turfFar);
     g.addColorStop(1, theme.turfNear);
     ctx.fillStyle = g;
-    ctx.beginPath();
-    corners.forEach((c, i) => (i ? ctx.lineTo(c![0], c![1]) : ctx.moveTo(c![0], c![1])));
-    ctx.closePath();
     ctx.fill();
     // end zones
     for (const [a, b] of [[0, 10], [110, 120]]) {
       const ea = Math.max(u0, Math.min(uOf(a), uOf(b)));
       const eb = Math.min(u1, Math.max(uOf(a), uOf(b)));
-      const ez = [[0, ea], [FIELD_W, ea], [FIELD_W, eb], [0, eb]].map(([l, u]) => view.project(l, u));
-      if (eb > ea && ez.every(Boolean)) {
+      if (eb > ea && fillGround(ctx, view, [[0, ea], [FIELD_W, ea], [FIELD_W, eb], [0, eb]])) {
         ctx.fillStyle = theme.endZone;
-        ctx.beginPath();
-        ez.forEach((c, i) => (i ? ctx.lineTo(c![0], c![1]) : ctx.moveTo(c![0], c![1])));
-        ctx.closePath();
         ctx.fill();
       }
     }
@@ -288,27 +328,26 @@ export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp:
     const featured = a === f;
     dot(ctx, x, y, Math.max(2.5, s * 0.55), featured ? theme.featured : a.offense ? theme.offense : theme.defense, featured || a.role === "target");
   }
-  // names for the target (above) and the featured defender (below); when the two are close, the target's name goes
-  // above whichever dot is higher and the defender's below whichever is lower, so they never overlap
+  // names: the target's above his dot and the featured defender's below his; when the two dots are near each other
+  // on screen, the higher dot's name goes above it and the lower dot's below it, so the names never share a row
   const named = placed.filter(({ a }) => a === f || a.role === "target");
-  const ys = named.map(({ q }) => q![1]);
-  const close = named.length === 2 && Math.abs(ys[0] - ys[1]) < 28 && Math.abs(named[0].q![0] - named[1].q![0]) < 80;
+  const near = named.length === 2 && Math.abs(named[0].q![0] - named[1].q![0]) < 90 && Math.abs(named[0].q![1] - named[1].q![1]) < 70;
+  const higher = near ? (named[0].q![1] <= named[1].q![1] ? named[0].a : named[1].a) : null;
   for (const { a, q } of named) {
     const [x, y, s] = q!;
     const r = Math.max(2.5, s * 0.55);
     const featured = a === f;
-    const top = close ? Math.min(...ys) : y;
-    const bottom = close ? Math.max(...ys) : y;
+    const above = higher ? a === higher : !featured;
     ctx.fillStyle = featured ? theme.featured : theme.target;
     ctx.font = `700 ${Math.max(10, Math.min(16, s * 1.3))}px ${theme.display}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(lastName(a), x, featured ? bottom + r + 10 : top - r - 9);
+    ctx.fillText(surname(a.name), x, above ? y - r - 9 : y + r + 10);
   }
 
   // the ball and its shadow
   if (thrown && frame < scene.frames - 1) {
-    const [l, u, z] = ballAt(scene, frame);
+    const [l, u, z] = ballAt(scene, frame, land);
     const shadow = view.project(l, u);
     const ball = view.project(l, u, z);
     if (shadow) {

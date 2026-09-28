@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { camera, CAMERAS, defaultCamera, perspective, screenNudge, type CameraName, type View, type Viewport } from "./cameras";
+import { blend, camera, CAMERAS, defaultCamera, perspective, screenNudge, type CameraName, type View, type Viewport } from "./cameras";
 import { along, buildScene, type Pt, type Scene } from "./scene";
 import { makePlay, shapes } from "./testplays";
 import { makeTimeline } from "./timeline";
@@ -32,44 +32,61 @@ function promised(name: CameraName, s: Scene, frame: number): Pt[] {
 
 describe("perspective", () => {
   it("puts the look at point in the middle of the screen and drops points behind the camera", () => {
-    const p = perspective([0, -10, 10], [0, 10, 0], 500, WIDE);
-    expect(p(0, 10)).toEqual([expect.closeTo(640), expect.closeTo(360), expect.any(Number)]);
-    expect(p(0, -30)).toBeNull();
-    expect(p(5, 10)![0]).toBeGreaterThan(640);
+    const { project, depth } = perspective([0, -10, 10], [0, 10, 0], 500, WIDE);
+    expect(project(0, 10)).toEqual([expect.closeTo(640), expect.closeTo(360), expect.any(Number)]);
+    expect(project(0, -30)).toBeNull();
+    expect(depth(0, -30)).toBeLessThan(0);
+    expect(project(5, 10)![0]).toBeGreaterThan(640);
   });
 });
 
 describe("framing", () => {
-  const scenes = shapes().map((s) => ({ s, scene: buildScene(makePlay(s)) }));
+  // every shape, featuring the default defender and then the safety, who is often a help defender far from the ball
+  const scenes = shapes().flatMap((s) => [
+    { s, scene: buildScene(makePlay(s)) },
+    { s: { ...s, featured: 4 }, scene: buildScene(makePlay(s), 4) },
+  ]);
   for (const name of CAMERAS)
     for (const vp of [WIDE, TALL])
-      it(`${name} keeps what it promises in frame, ${vp.w}x${vp.h}, over ${scenes.length} plays`, () => {
+      it(`${name} keeps what it promises in frame, ${vp.w}x${vp.h}, over ${scenes.length} scenes`, () => {
         const misses: string[] = [];
         for (const { s, scene } of scenes) {
           const tl = makeTimeline(scene);
-          for (let f = tl.start; f <= tl.arriveFrame; f += 0.5) {
-            const frame = Math.min(f, tl.arriveFrame);
+          const frames = [tl.throwFrame, tl.arriveFrame];
+          for (let f = tl.start; f <= tl.arriveFrame; f += 0.5) frames.push(f);
+          for (const frame of frames) {
             const out = outside(camera(name, scene, frame, vp), vp, promised(name, scene, frame));
             if (out.length) {
               misses.push(`${JSON.stringify(s)} frame ${frame}: ${JSON.stringify(out)}`);
               break;
             }
           }
-          for (const frame of [tl.throwFrame, tl.arriveFrame]) {
-            const out = outside(camera(name, scene, frame, vp), vp, promised(name, scene, frame));
-            if (out.length) misses.push(`${JSON.stringify(s)} frame ${frame}: ${JSON.stringify(out)}`);
-          }
         }
         expect(misses.slice(0, 5)).toEqual([]);
       });
-  it("overhead in what if mode shows the whole width of the field and inverts exactly", () => {
+  it("overhead in what if mode shows the whole width of the field, follows the spot, and inverts exactly", () => {
     const scene = buildScene(makePlay({ dir: "right", yl: 30, depth: 20, across: 10 }));
     for (const vp of [WIDE, TALL]) {
-      const view = camera("overhead", scene, scene.frames - 1, vp, true);
-      expect(outside(view, vp, [[0, scene.land[1]], [53.3, scene.land[1]]])).toEqual([]);
+      const far: Pt = [30, 70];
+      const view = camera("overhead", scene, scene.frames - 1, vp, far);
+      expect(outside(view, vp, [[0, scene.land[1]], [53.3, scene.land[1]], far, scene.land])).toEqual([]);
       const [x, y] = view.project(12.5, 17.25)!;
       expect(view.unproject!(x, y)).toEqual([expect.closeTo(12.5), expect.closeTo(17.25)]);
     }
+  });
+});
+
+describe("blend", () => {
+  it("starts at one view, ends at the other, and passes through the middle", () => {
+    const scene = buildScene(makePlay({ dir: "left", yl: 60, depth: 25, across: 30 }));
+    const a = camera("broadcast", scene, 10, WIDE);
+    const b = camera("overhead", scene, 10, WIDE);
+    const pt: Pt = [30, 25];
+    expect(blend(a, b, 0).project(...pt)).toEqual(a.project(...pt));
+    expect(blend(a, b, 1).project(...pt)).toEqual(b.project(...pt));
+    const mid = blend(a, b, 0.5).project(...pt)!;
+    expect(mid[0]).toBeCloseTo((a.project(...pt)![0] + b.project(...pt)![0]) / 2);
+    expect(blend(a, b, 0.5).unproject).toBe(b.unproject);
   });
 });
 
@@ -80,8 +97,8 @@ describe("defaults and keys", () => {
   });
   it("moves a point the way the arrow keys look on an overhead screen", () => {
     const scene = buildScene(makePlay({ dir: "right", yl: 30, depth: 20, across: 10 }));
-    const wide = camera("overhead", scene, 0, WIDE, true);
-    const tall = camera("overhead", scene, 0, TALL, true);
+    const wide = camera("overhead", scene, 0, WIDE, scene.land);
+    const tall = camera("overhead", scene, 0, TALL, scene.land);
     expect(screenNudge(wide, [10, 20], "ArrowRight", false)).toEqual([10, 20.5]);
     expect(screenNudge(wide, [10, 20], "ArrowUp", true)).toEqual([5, 20]);
     expect(screenNudge(tall, [10, 20], "ArrowUp", false)).toEqual([10, 20.5]);

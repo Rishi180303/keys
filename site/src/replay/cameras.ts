@@ -10,6 +10,8 @@ export type Projected = [number, number, number];
 export type View = {
   flat: boolean;
   project: (l: number, u: number, z?: number) => Projected | null;
+  /** distance in front of the camera (perspective views), so lines can be cut where they pass behind it */
+  depth: ((l: number, u: number, z?: number) => number) | null;
   /** a screen point back to the ground, flat views only */
   unproject: ((x: number, y: number) => Pt) | null;
   /** the downfield range worth drawing */
@@ -18,6 +20,11 @@ export type View = {
   /** flat views: which way downfield points on screen */
   downfield: "right" | "up" | null;
 };
+
+/** Points closer to a perspective camera than this, in yards, are not drawn. */
+export const NEAR = 1;
+/** The margin every fitted camera keeps around what it promises to show, as a share of the screen. */
+const MARGIN = 0.08;
 
 type V3 = [number, number, number];
 type Box = { l0: number; l1: number; u0: number; u1: number };
@@ -32,17 +39,19 @@ const norm = (a: V3): V3 => {
   return [a[0] / n, a[1] / n, a[2] / n];
 };
 
-/** A pinhole camera at pos looking at tgt, +z up; points closer than a yard in front of it are null. */
+/** A pinhole camera at pos looking at tgt, +z up; points closer than NEAR in front of it project to null. */
 export function perspective(pos: V3, tgt: V3, focal: number, vp: Viewport) {
   const f = norm(sub(tgt, pos));
   const r = norm(cross(f, [0, 0, 1]));
   const up = cross(r, f);
-  return (l: number, u: number, z = 0): Projected | null => {
+  const depth = (l: number, u: number, z = 0) => dot(sub([l, u, z], pos), f);
+  const project = (l: number, u: number, z = 0): Projected | null => {
     const d = sub([l, u, z], pos);
     const zc = dot(d, f);
-    if (zc < 1) return null;
+    if (zc < NEAR) return null;
     return [vp.w / 2 + (focal * dot(d, r)) / zc, vp.h / 2 - (focal * dot(d, up)) / zc, focal / zc];
   };
+  return { project, depth };
 }
 
 function boxOf(pts: Pt[], pad: number, minL: number, minU: number): Box {
@@ -85,87 +94,96 @@ export function keyPoints(scene: Scene): Pt[] {
   });
 }
 
+/** A camera looking at `at` from behind (smaller u) at a fixed pitch, pulled back until every point fits with the
+ * margin. Returns the distance; the search is over a range where fitting only gets easier with distance. */
+function fit(at: V3, pitch: number, focal: number, vp: Viewport, pts: V3[], min: number): number {
+  const place = (d: number) => perspective([at[0], at[1] - d * Math.cos(pitch), at[2] + d * Math.sin(pitch)], at, focal, vp).project;
+  const fits = (d: number) => {
+    const p = place(d);
+    return pts.every(([l, u, z]) => {
+      const q = p(l, u, z);
+      return q !== null && q[0] >= MARGIN * vp.w && q[0] <= vp.w * (1 - MARGIN) && q[1] >= MARGIN * vp.h && q[1] <= vp.h * (1 - MARGIN);
+    });
+  };
+  let [lo, hi] = [min, 1000];
+  if (fits(lo)) return lo;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (fits(mid)) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+const centerOf = (pts: Pt[]): V3 => {
+  const b = boxOf(pts, 0, 0, 0);
+  return [(b.l0 + b.l1) / 2, (b.u0 + b.u1) / 2, 0];
+};
+const eye = (at: V3, pitch: number, d: number): V3 => [at[0], at[1] - d * Math.cos(pitch), d * Math.sin(pitch)];
+const ground = (pts: Pt[]): V3[] => pts.map(([l, u]): V3 => [l, u, 0]);
+const rad = (deg: number) => (deg * Math.PI) / 180;
+
 function broadcast(scene: Scene, frame: number, vp: Viewport): View {
   const focal = 0.62 * vp.w;
   // steeper on a tall screen, so the field fills the height instead of the sky
-  const pitch = ((vp.h > vp.w ? 50 : 32) * Math.PI) / 180;
+  const pitch = rad(vp.h > vp.w ? 50 : 32);
   const setup = cached(scene, `b${vp.w}x${vp.h}`, () => {
     const pts = keyPoints(scene);
-    const box = boxOf(pts, 0, 0, 0);
-    const lc = (box.l0 + box.l1) / 2;
-    const uc = (box.u0 + box.u1) / 2;
+    const at = centerOf(pts);
     // the ball's highest point stays in frame too
-    const apex = ballAt(scene, scene.nIn - 1 + scene.nfo / 2);
-    const test: V3[] = [...pts.map(([l, u]): V3 => [l, u, 0]), apex];
-    const at = (d: number) => perspective([lc, uc - d * Math.cos(pitch), d * Math.sin(pitch)], [lc, uc, 0], focal, vp);
-    const fits = (d: number) => {
-      const p = at(d);
-      const mx = 0.08 * vp.w;
-      const my = 0.08 * vp.h;
-      return test.every(([l, u, z]) => {
-        const q = p(l, u, z);
-        return q !== null && q[0] >= mx && q[0] <= vp.w - mx && q[1] >= my && q[1] <= vp.h - my;
-      });
-    };
-    let [lo, hi] = [5, 800];
-    for (let i = 0; i < 40; i++) {
-      const mid = (lo + hi) / 2;
-      if (fits(mid)) hi = mid;
-      else lo = mid;
-    }
-    return { lc, uc, d: hi, box };
+    const d = fit(at, pitch, focal, vp, [...ground(pts), ballAt(scene, scene.nIn - 1 + scene.nfo / 2)], 5);
+    return { at, d, box: boxOf(pts, 0, 0, 0) };
   });
   // a slow push in while the ball is in the air
-  const d = setup.d * (1 - 0.03 * ease(airAt(scene, frame)));
-  const pos: V3 = [setup.lc, setup.uc - d * Math.cos(pitch), d * Math.sin(pitch)];
-  return {
-    flat: false,
-    project: perspective(pos, [setup.lc, setup.uc, 0], focal, vp),
-    unproject: null,
-    uMin: Math.max(setup.box.u0 - 25, pos[1] + 2),
-    uMax: setup.box.u1 + 45,
-    downfield: null,
-  };
+  const pos = eye(setup.at, pitch, setup.d * (1 - 0.03 * ease(airAt(scene, frame))));
+  return { flat: false, ...perspective(pos, setup.at, focal, vp), unproject: null, uMin: pos[1] - 60, uMax: setup.box.u1 + 45, downfield: null };
 }
 
 function chase(scene: Scene, frame: number, vp: Viewport): View {
   const focal = 0.62 * vp.w;
-  // a tall screen looks down more steeply, so the field fills it instead of the sky
   const tall = vp.h > vp.w;
   const throwF = scene.nIn - 1;
+  const last = scene.frames - 1;
+  const poses = cached(scene, `c${vp.w}x${vp.h}`, () => {
+    // at the throw: low behind the passer, looking toward the target, far enough back for both
+    const qT = along(scene.passer.path, throwF);
+    const tq = scene.target ? along(scene.target.path, throwF) : scene.land;
+    const start: V3 = [lerp(qT[0], tq[0], 0.5), lerp(qT[1], tq[1], 0.35), 0];
+    const p0 = rad(tall ? 30 : 16);
+    const d0 = fit(start, p0, focal, vp, ground([qT, tq]), 12);
+    // at arrival: higher, over the landing spot, the target, the featured defender and where he was expected
+    const ends: Pt[] = [scene.land];
+    if (scene.target) ends.push(scene.target.path[last]);
+    if (scene.featured) ends.push(scene.featured.path[last], ghostAt(scene.featured, scene, last) ?? scene.land);
+    const end = centerOf(ends);
+    const p1 = rad(tall ? 46 : 28);
+    const d1 = fit(end, p1, focal, vp, ground(ends), 16);
+    return { qT, start, from: eye(start, p0, d0), end, to: eye(end, p1, d1) };
+  });
+  // before the throw the camera rides along with the passer
   const q = along(scene.passer.path, Math.min(frame, throwF));
-  const tq = scene.target ? along(scene.target.path, throwF) : scene.land;
-  // behind the passer, far enough back to see the target at the throw
-  const back = Math.max(13, Math.abs(tq[0] - q[0]) * 0.7);
-  const pos0: V3 = [q[0], q[1] - back, tall ? 10 : 6.5];
-  const look0: V3 = [lerp(q[0], tq[0], 0.5), q[1] + 18, 0];
-  // at arrival: centered on the landing spot, the target and the featured defender, far enough back for all three
-  const end = [scene.land, ...(scene.target ? [scene.target.path[scene.frames - 1]] : []), ...(scene.featured ? [scene.featured.path[scene.frames - 1]] : [])];
-  const cl = end.reduce((a, p) => a + p[0], 0) / end.length;
-  const cu = end.reduce((a, p) => a + p[1], 0) / end.length;
-  const spreadL = Math.max(...end.map((p) => Math.abs(p[0] - cl)));
-  const dist = Math.max(19, spreadL * 2.4);
-  const pos1: V3 = [lerp(q[0], cl, 0.75), cu - dist, tall ? 18 : 11];
-  const look1: V3 = [cl, cu + 2, 0];
+  const shift: V3 = [q[0] - poses.qT[0], q[1] - poses.qT[1], 0];
   const e = ease(airAt(scene, frame));
-  const pos: V3 = [lerp(pos0[0], pos1[0], e), lerp(pos0[1], pos1[1], e), lerp(pos0[2], pos1[2], e)];
-  const look: V3 = [lerp(look0[0], look1[0], e), lerp(look0[1], look1[1], e), 0];
-  return { flat: false, project: perspective(pos, look, focal, vp), unproject: null, uMin: pos[1] + 2, uMax: pos[1] + 90, downfield: null };
+  const mix = (a: V3, b: V3): V3 => [lerp(a[0] + shift[0] * (1 - e), b[0], e), lerp(a[1] + shift[1] * (1 - e), b[1], e), lerp(a[2], b[2], e)];
+  const pos = mix(poses.from, poses.to);
+  return { flat: false, ...perspective(pos, mix(poses.start, poses.end), focal, vp), unproject: null, uMin: pos[1] - 60, uMax: pos[1] + 120, downfield: null };
 }
 
-function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: boolean): View {
+function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: Pt | null): View {
   const right = vp.w >= vp.h;
   const full = cached(scene, "ofull", () => boxOf(keyPoints(scene), 5, 20, 25));
   let box = full;
   if (whatIf) {
-    // the whole width of the field and room downfield, so a dragged spot always has somewhere to go
-    box = { l0: -2, l1: 55.3, u0: full.u0, u1: Math.max(full.u1, scene.land[1] + 15) };
+    // the whole width of the field, and wherever the what if spot has been put, with room around it
+    box = { l0: -2, l1: 55.3, u0: Math.min(full.u0, whatIf[1] - 12), u1: Math.max(full.u1, scene.land[1] + 15, whatIf[1] + 15) };
   } else {
     const s = ease(airAt(scene, frame));
     if (s > 0) {
-      const ends = [scene.land, ...(scene.target ? [scene.target.path[scene.frames - 1]] : [])];
-      if (scene.featured) ends.push(scene.featured.path[scene.frames - 1], ghostAt(scene.featured, scene, scene.frames - 1) ?? scene.land);
-      const air = cached(scene, "oair", () => boxOf(ends, 6, 18, 22));
+      const air = cached(scene, "oair", () => {
+        const ends = [scene.land, ...(scene.target ? [scene.target.path[scene.frames - 1]] : [])];
+        if (scene.featured) ends.push(scene.featured.path[scene.frames - 1], ghostAt(scene.featured, scene, scene.frames - 1) ?? scene.land);
+        return boxOf(ends, 6, 18, 22);
+      });
       box = { l0: lerp(full.l0, air.l0, s), l1: lerp(full.l1, air.l1, s), u0: lerp(full.u0, air.u0, s), u1: lerp(full.u1, air.u1, s) };
     }
   }
@@ -180,14 +198,36 @@ function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: boolean): V
       : [vp.w / 2 + (l - lc) * sc, vp.h / 2 - (u - uc) * sc - z * sc * 0.35, sc * (1 + z * 0.025)];
   const unproject = (x: number, y: number): Pt => (right ? [lc + (y - vp.h / 2) / sc, uc + (x - vp.w / 2) / sc] : [lc + (x - vp.w / 2) / sc, uc - (y - vp.h / 2) / sc]);
   const half = (right ? vp.w : vp.h) / 2 / sc;
-  return { flat: true, project, unproject, uMin: uc - half - 1, uMax: uc + half + 1, downfield: right ? "right" : "up" };
+  return { flat: true, project, depth: null, unproject, uMin: uc - half - 1, uMax: uc + half + 1, downfield: right ? "right" : "up" };
 }
 
-/** The view a camera has of a scene at a frame in a viewport. whatIf holds the overhead framing still and wide. */
-export function camera(name: CameraName, scene: Scene, frame: number, vp: Viewport, whatIf = false): View {
+/** The view a camera has of a scene at a frame in a viewport. A what if spot holds the overhead framing still, wide,
+ * and around the spot. */
+export function camera(name: CameraName, scene: Scene, frame: number, vp: Viewport, whatIf: Pt | null = null): View {
   if (name === "overhead") return overhead(scene, frame, vp, whatIf);
   if (name === "chase") return chase(scene, frame, vp);
   return broadcast(scene, frame, vp);
+}
+
+/** Part way from one view to another, 0 to 1, by blending where each puts every point on screen: switching cameras
+ * glides instead of cutting. */
+export function blend(a: View, b: View, k: number): View {
+  if (k <= 0) return a;
+  if (k >= 1) return b;
+  return {
+    flat: k < 0.5 ? a.flat : b.flat,
+    project: (l, u, z = 0) => {
+      const p = a.project(l, u, z);
+      const q = b.project(l, u, z);
+      if (!p || !q) return k < 0.5 ? p : q;
+      return [lerp(p[0], q[0], k), lerp(p[1], q[1], k), lerp(p[2], q[2], k)];
+    },
+    depth: a.depth && b.depth ? (l, u, z = 0) => Math.min(a.depth!(l, u, z), b.depth!(l, u, z)) : (a.depth ?? b.depth),
+    unproject: b.unproject,
+    uMin: Math.min(a.uMin, b.uMin),
+    uMax: Math.max(a.uMax, b.uMax),
+    downfield: b.downfield,
+  };
 }
 
 /** The camera a replay uses when the viewer has not picked one: chase when it is taller than wide. */

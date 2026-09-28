@@ -44,8 +44,12 @@ export function makeTimeline(scene: Scene, speed = 1): Timeline {
   };
 }
 
-/** The time one whole frame before or after t, for stepping with the arrow keys. */
+/** The time one whole frame before or after t, for stepping with the arrow keys. From the arrival frame a step
+ * forward goes to the end of the hold, where the caption shows; from the hold a step back goes to the frame before
+ * arrival. */
 export function stepFrame(tl: Timeline, t: number, dir: 1 | -1): number {
+  if (dir > 0 && t >= tl.tArrive - 1e-9) return tl.duration;
+  if (dir < 0 && t > tl.tArrive + 1e-9) return tl.timeAt(tl.arriveFrame - 1);
   const f = tl.frameAt(t);
   const next = dir > 0 ? Math.floor(f + 1e-9) + 1 : Math.ceil(f - 1e-9) - 1;
   return tl.timeAt(next);

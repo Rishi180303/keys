@@ -1,6 +1,6 @@
 import type { PlayRow, Shrink } from "./types";
 
-/** The leaderboard's filters. cov is any, man, zone or one coverage type. */
+/** The leaderboard's filters. grp is a position group or any; cov is any, man, zone or one coverage type. */
 export type Filters = { grp: string; cov: string; route: string; role: string; team: string; minPlays: number };
 export type Tier = "above" | "average" | "below";
 export type PlayerRating = {
@@ -33,7 +33,7 @@ export function applyFilters(rows: PlayRow[], f: Filters): PlayRow[] {
     f.cov === "any" || (f.cov === "man" || f.cov === "zone" ? r.mz === f.cov : r.cov === f.cov);
   return rows.filter(
     (r) =>
-      r.grp === f.grp &&
+      (f.grp === "any" || r.grp === f.grp) &&
       cov(r) &&
       (f.route === "any" || r.route === f.route) &&
       (f.role === "any" || r.role === f.role) &&

@@ -52,9 +52,10 @@ describe("applyFilters", () => {
     row({ id: 3, grp: "S", mz: "zone", cov: "COVER_2_ZONE", route: "GO", role: "primary", team: "KC" }),
   ];
   const ids = (f: Partial<Filters>) => applyFilters(rows, { ...any, ...f }).map((r) => r.id);
-  it("filters by group, man or zone, coverage type, route, role and team", () => {
+  it("filters by group or any group, man or zone, coverage type, route, role and team", () => {
     expect(ids({})).toEqual([1, 2]);
     expect(ids({ grp: "S" })).toEqual([3]);
+    expect(ids({ grp: "any" })).toEqual([1, 2, 3]);
     expect(ids({ cov: "man" })).toEqual([1]);
     expect(ids({ cov: "zone" })).toEqual([2]);
     expect(ids({ cov: "COVER_3_ZONE" })).toEqual([2]);

@@ -9,6 +9,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: origin ? { proxy: { "/data": { target: origin, changeOrigin: true } } } : undefined,
-    test: { environment: "node", include: ["src/**/*.test.ts"] },
+    test: { environment: "node", include: ["src/**/*.test.ts", "scripts/**/*.test.ts"] },
   };
 });

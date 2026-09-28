@@ -12,13 +12,17 @@ def _table(rating_play):
 
 
 def test_plays_json_is_columnar_and_rounded(rating_play):
-    pj = site.plays_json(_table(rating_play))
+    table = _table(rating_play)
+    pj = site.plays_json(table)
     assert pj["columns"][:4] == ["game", "play", "week", "id"] and pj["columns"][-3:] == ["z", "zc", "ex"]
     assert len(pj["rows"]) == 2
     row = dict(zip(pj["columns"], pj["rows"][0]))
     assert row["id"] == 3 and row["yards"] == 1.0 and row["ex"] is None and row["air"] == 6 and row["role"] == "primary"
     assert row["team"] == "KC" and row["cov"] == "COVER_3_ZONE" and row["mz"] == "zone" and row["epa"] == 0.5
     assert all(isinstance(v, (int, float, str, type(None))) for v in pj["rows"][0])
+    # zc keeps six decimals so the site's tiers match rate.py; two decimals flipped a player 1.4e-05 from the line
+    exact = site.plays_json(table.with_columns(zc=pl.lit(0.1234567)))
+    assert dict(zip(exact["columns"], exact["rows"][0]))["zc"] == 0.123457 and row["d0"] == round(table["d0"][0], 2)
 
 
 def test_game_file_round_trips_the_input_rows(rating_play):

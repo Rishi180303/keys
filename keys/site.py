@@ -28,9 +28,11 @@ def _round(cols):
 
 
 def plays_table(table: pl.DataFrame) -> pl.DataFrame:
-    """The rated table with the site's short column names and floats to two decimals."""
-    floats = [c for c in PLAY_COLUMNS if table.schema[c] == pl.Float64]
-    return table.select(list(PLAY_COLUMNS)).with_columns(_round(floats)).rename(PLAY_COLUMNS)
+    """The rated table with the site's short column names, floats to two decimals and zc to six.
+
+    The site recomputes every tier from zc, and two decimals moved a player sitting 1.4e-05 from a tier line."""
+    floats = [c for c in PLAY_COLUMNS if table.schema[c] == pl.Float64 and c != "zc"]
+    return table.select(list(PLAY_COLUMNS)).with_columns(*_round(floats), pl.col("zc").round(6)).rename(PLAY_COLUMNS)
 
 
 def plays_json(table: pl.DataFrame) -> dict:

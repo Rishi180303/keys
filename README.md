@@ -26,11 +26,17 @@ Every flagged coverage defender gets a number called closing over expected. Know
 
 The rating is computed inside the pipeline after the model is published, and it has to pass its own checks before anything is written for the site: no coverage scheme, route, air time, starting distance, role or position moves the average by more than a quarter of the spread between players, and a defender's number in half the season has to line up with his number in the other half. If a check fails the site keeps the last data that passed.
 
+The same step picks eight highlights for the site. Each one is a different defender's best rated play on a throw that hung in the air for at least a second and a half, and every position group gets at least two. The pipeline saves them with everything a replay needs.
+
 ## site
 
 The website is a small React app on CloudFront. It reads three kinds of files the pipeline writes: one table with every rated defender play, one file per game with every player's tracking frames and the model's expected paths, and a meta file with the checks. The leaderboard is computed in the browser from the play table, so any combination of position, coverage, route, role and team works without a server. A teams tab does the same for whole defenses, as a plain mean with no shrinkage. The play viewer draws a play frame by frame with the actual paths next to the expected ones. The what if tool lets you drag the landing spot or move it with the arrow keys, or change the air time, and asks the live API what the model would expect instead.
 
 To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format and the rows the what if tool sends to the API.
+
+## photos
+
+Player photos come from Wikimedia Commons, because I have no right to use NFL headshots. A separate job looks up every listed defender on Wikidata. It only accepts a football player with the same name and the same birth date, since a name alone is not enough to be sure. It keeps a picture when Commons lists it under a Creative Commons attribution or share alike license, under CC0, or as public domain. It also saves the artist, the license and a link to the file page, so the site can credit every photo. On the 2023 season that found a photo for 217 of the 320 listed defenders. I run it by hand after the rating.
 
 ## data
 

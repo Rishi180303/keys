@@ -1,8 +1,9 @@
-"""Container entrypoint. Usage: python scripts/job.py prepare|train|score|publish|rate
+"""Container entrypoint. Usage: python scripts/job.py prepare|train|score|publish|rate|photos
 
 Environment: KEYS_DATA_BUCKET and KEYS_ARTIFACTS_BUCKET (unset means local files only), KEYS_RUN
 (default local), KEYS_FOLD (train only), KEYS_WEEKS (default 1-18), KEYS_EPOCHS (default 80),
-KEYS_SITE_BUCKET and KEYS_API_URL (rate only).
+KEYS_SITE_BUCKET (rate and photos), KEYS_API_URL (rate only), KEYS_PHOTOS_EXCLUDE (photos only, nfl ids
+separated by commas that get no photo).
 Roots: KEYS_RAW, KEYS_DATA, KEYS_MODELS, see keys/paths.py."""
 
 import json
@@ -12,7 +13,7 @@ import time
 
 import polars as pl
 
-from keys import data, paths, publish, rate, score, site, sync, train
+from keys import data, paths, photos, publish, rate, score, site, sync, train
 
 STAGE = sys.argv[1]
 DATA_BUCKET = os.environ.get("KEYS_DATA_BUCKET")
@@ -116,5 +117,32 @@ def stage_rate():
     print("site data", len(files), "files", "pushed to" if SITE_BUCKET else "written to", SITE_BUCKET or dest)
 
 
-STAGES = {"prepare": stage_prepare, "train": stage_train, "score": stage_score, "publish": stage_publish, "rate": stage_rate}
+def stage_photos():
+    """Run by hand after a rate stage: python scripts/job.py photos with KEYS_RUN set to the rated run."""
+    table_path = paths.DATA / "ratings" / "plays.parquet"
+    if DATA_BUCKET:
+        sync.pull(DATA_BUCKET, "processed/", data.PROCESSED)
+    if ART_BUCKET:
+        sync.pull_file(ART_BUCKET, f"ratings/{RUN}/plays.parquet", table_path)
+    inp, _ = data.load_weeks(WEEKS, columns=["nfl_id", "player_birth_date"])
+    excluded = {int(v) for v in os.environ.get("KEYS_PHOTOS_EXCLUDE", "").split(",") if v.strip()}
+    people = [p for p in photos.roster(pl.read_parquet(table_path), inp) if p["id"] not in excluded]
+    dest = paths.DATA / "photos"
+    index = photos.collect(people, dest)
+    if not index:
+        raise ValueError("no photo was found, so the photos already on the site stay as they are")
+    if SITE_BUCKET:
+        kinds = {ext: kind for kind, ext in photos.TYPES.items()}
+        for name in sorted(entry["file"] for entry in index.values()):
+            extra = {"CacheControl": "max-age=86400", "ContentType": kinds[name.rsplit(".", 1)[1]]}
+            sync.push_file(dest / name, SITE_BUCKET, f"data/photos/{name}", extra=extra)
+        extra = {"CacheControl": "max-age=300", "ContentType": "application/json"}
+        sync.push_file(dest / "photos.json", SITE_BUCKET, "data/photos.json", extra=extra)
+    print("photos", len(index), "of", len(people), "pushed to" if SITE_BUCKET else "written to", SITE_BUCKET or dest)
+
+
+STAGES = {
+    "prepare": stage_prepare, "train": stage_train, "score": stage_score, "publish": stage_publish, "rate": stage_rate,
+    "photos": stage_photos,
+}
 STAGES[STAGE]()

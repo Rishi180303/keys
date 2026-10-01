@@ -1,7 +1,10 @@
+import io
 import json
 import runpy
 import sys
+import urllib.error
 
+import polars as pl
 import pytest
 import torch
 
@@ -116,6 +119,8 @@ def test_rate_with_buckets_pulls_and_pushes(roots, monkeypatch, rating_play, sup
     pred.write_parquet(roots / "pred.parquet")
     fake_s3.store[("art", "predictions/run1/predictions.parquet")] = (roots / "pred.parquet").read_bytes()
     fake_s3.store[("art", "summary/run1.json")] = b'{"le40": {"mean": 0.5}}'
+    photos = {("site", "data/photos.json"): b'{"11":{"file":"11.jpg"}}', ("site", "data/photos/11.jpg"): b"jpeg"}
+    fake_s3.store.update(photos)  # what the photos step published earlier
     monkeypatch.setattr(sync, "client", lambda: fake_s3)
     checks = {"passed": True, "failed": [], "rows": {"flagged": 2}, "reliability": None, "league_mean": None, "excluded": None}
     monkeypatch.setattr(rate, "gate", lambda table, players: checks)
@@ -124,8 +129,85 @@ def test_rate_with_buckets_pulls_and_pushes(roots, monkeypatch, rating_play, sup
     assert {"ratings/run1/plays.parquet", "ratings/run1/checks.json", "data/plays.json", "data/meta.json", "data/games/1.json"} <= keys
     assert fake_s3.extra[("site", "data/meta.json")] == {"CacheControl": "max-age=300", "ContentType": "application/json"}
     assert fake_s3.store[("site", "data/highlights.json")] == b"[]"
+    assert {k: fake_s3.store[k] for k in photos} == photos and not set(photos) & set(fake_s3.extra)  # a rerun leaves them alone
     assert fake_s3.extra[("site", "data/highlights.json")] == fake_s3.extra[("site", "data/meta.json")]
     assert fake_s3.extra[("art", "ratings/run1/checks.json")] is None
     assert json.loads(fake_s3.store[("site", "data/meta.json")])["summary"] == {"le40": {"mean": 0.5}}
     assert (roots / "raw" / "supplementary_data.csv").exists()
 
+
+def _photos_inputs(people):
+    """What the photos stage reads, as bytes by path: a rated table that lists people and one week with birth dates."""
+    from keys.rate import MIN_PLAYS
+
+    def parquet(frame):
+        buffer = io.BytesIO()
+        frame.write_parquet(buffer)
+        return buffer.getvalue()
+
+    listed = [p for p in people for _ in range(MIN_PLAYS)]
+    table = pl.DataFrame({"nfl_id": [p["id"] for p in listed], "name": [p["name"] for p in listed]})
+    born = pl.DataFrame({"nfl_id": [p["id"] for p in people], "player_birth_date": [p["born"] for p in people]})
+    return {
+        "ratings/plays.parquet": parquet(table.with_columns(ex=pl.lit(None, dtype=pl.String))),
+        "processed/input_w01.parquet": parquet(born), "processed/output_w01.parquet": parquet(born.select("nfl_id")),
+    }
+
+
+def _photos_local(roots, monkeypatch):
+    from conftest import PEOPLE
+
+    monkeypatch.setenv("KEYS_WEEKS", "1")
+    for rel, body in _photos_inputs(PEOPLE).items():
+        (roots / "data" / rel).parent.mkdir(parents=True, exist_ok=True)
+        (roots / "data" / rel).write_bytes(body)
+
+
+def test_local_photos_writes_the_photos_and_their_index(roots, monkeypatch, wikimedia):
+    _photos_local(roots, monkeypatch)
+    monkeypatch.setenv("KEYS_PHOTOS_EXCLUDE", "12, 14")
+    _run("photos", monkeypatch)
+    dest = roots / "data" / "photos"
+    assert sorted(f.name for f in dest.iterdir()) == ["11.jpg", "13.webp", "photos.json"]
+    assert sorted(json.loads((dest / "photos.json").read_text())) == ["11", "13"]
+
+
+def test_photos_with_buckets_pulls_and_pushes(roots, monkeypatch, wikimedia, fake_s3):
+    from conftest import PEOPLE
+
+    from keys import sync
+
+    monkeypatch.setenv("KEYS_WEEKS", "1")
+    monkeypatch.setenv("KEYS_RUN", "run1")
+    monkeypatch.setenv("KEYS_DATA_BUCKET", "data")
+    monkeypatch.setenv("KEYS_ARTIFACTS_BUCKET", "art")
+    monkeypatch.setenv("KEYS_SITE_BUCKET", "site")
+    files = _photos_inputs(PEOPLE)
+    fake_s3.store[("art", "ratings/run1/plays.parquet")] = files.pop("ratings/plays.parquet")
+    for rel, body in files.items():
+        fake_s3.store[("data", rel)] = body
+    monkeypatch.setattr(sync, "client", lambda: fake_s3)
+    _run("photos", monkeypatch)
+    pushed = [k for (b, k) in fake_s3.store if b == "site"]
+    assert pushed == ["data/photos/11.jpg", "data/photos/12.jpg", "data/photos/13.webp", "data/photos/14.png", "data/photos.json"]
+    assert fake_s3.extra[("site", "data/photos/11.jpg")] == {"CacheControl": "max-age=86400", "ContentType": "image/jpeg"}
+    assert fake_s3.extra[("site", "data/photos/13.webp")] == {"CacheControl": "max-age=86400", "ContentType": "image/webp"}
+    assert fake_s3.extra[("site", "data/photos/14.png")] == {"CacheControl": "max-age=86400", "ContentType": "image/png"}
+    assert fake_s3.extra[("site", "data/photos.json")] == {"CacheControl": "max-age=300", "ContentType": "application/json"}
+    assert sorted(json.loads(fake_s3.store[("site", "data/photos.json")])) == ["11", "12", "13", "14"]
+
+
+@pytest.mark.parametrize(("answer", "error"), [
+    (b'{"results": {"bindings": []}}', ValueError),
+    (urllib.error.URLError("unreachable"), urllib.error.URLError),
+])
+def test_photos_publishes_nothing_when_it_finds_nothing(roots, monkeypatch, wikimedia, fake_s3, answer, error):
+    from keys import photos, sync
+
+    _photos_local(roots, monkeypatch)
+    monkeypatch.setenv("KEYS_SITE_BUCKET", "site")
+    monkeypatch.setattr(sync, "client", lambda: fake_s3)
+    wikimedia[1][photos.SPARQL] = answer
+    with pytest.raises(error):
+        _run("photos", monkeypatch)
+    assert not fake_s3.store

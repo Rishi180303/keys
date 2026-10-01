@@ -5,6 +5,7 @@ import App from "./App";
 import About from "./pages/About";
 import Leaderboard from "./pages/Leaderboard";
 import Play from "./pages/Play";
+import Player from "./pages/Player";
 import "./styles.css";
 
 // the replay lab exists only in development builds
@@ -17,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
         <Route element={<App />}>
           <Route index element={<Leaderboard />} />
           <Route path="leaderboard" element={<Leaderboard />} />
+          <Route path="player/:id" element={<Player />} />
           <Route path="play/:game/:play" element={<Play />} />
           <Route path="about" element={<About />} />
           {import.meta.env.DEV && (

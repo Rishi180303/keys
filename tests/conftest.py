@@ -6,6 +6,18 @@ import polars as pl
 import pytest
 
 FRAMES_IN, FRAMES_OUT = 12, 6
+FIXTURES = Path(__file__).parent / "fixtures"
+# the players behind the recorded answers in tests/fixtures (asked on 2026-09-30, saved with indent 1)
+PEOPLE = [
+    {"id": 11, "name": "Jalen Ramsey", "born": "1994-10-24"},  # the label itself
+    {"id": 12, "name": "A.J. Terrell", "born": "1998-09-23"},  # the label is A. J. Terrell
+    {"id": 13, "name": "Pat Surtain II", "born": "2000-04-14"},  # an alias, and three images
+    {"id": 14, "name": "C.J. Mosley", "born": "1992-06-19"},  # a small public domain png
+    {"id": 15, "name": "Asante Samuel", "born": "1999-10-03"},  # the label is Asante Samuel Jr., no image
+    {"id": 16, "name": "Jalen Ramsey", "born": "1998-09-23"},  # the right name on the wrong birthday
+    {"id": 17, "name": "Pete Werner", "born": "1998-06-05"},  # no football player on Wikidata was born that day
+    {"id": 18, "name": "No Birthday", "born": None},
+]
 
 
 def reload_roots():
@@ -136,6 +148,25 @@ class FakeS3:
 @pytest.fixture
 def fake_s3():
     return FakeS3()
+
+
+@pytest.fixture
+def wikimedia(monkeypatch):
+    """The recorded Wikidata answer in place of the network, and no pauses.
+
+    Returns (calls, answers): every (url, form) asked, and the answer for each address, which a test can replace."""
+    from keys import photos
+
+    calls = []
+    answers = {photos.SPARQL: (FIXTURES / "wikidata.json").read_bytes()}
+
+    def get(url, form=None):
+        calls.append((url, form))
+        return answers[url]
+
+    monkeypatch.setattr(photos, "get", get)
+    monkeypatch.setattr(photos, "PAUSE", 0)
+    return calls, answers
 
 
 @pytest.fixture

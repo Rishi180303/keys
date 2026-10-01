@@ -2,6 +2,7 @@ import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import App from "./App";
+import Home from "./pages/Home";
 import How from "./pages/How";
 import Leaderboard from "./pages/Leaderboard";
 import Play from "./pages/Play";
@@ -16,7 +17,7 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Routes>
         <Route element={<App />}>
-          <Route index element={<Leaderboard />} />
+          <Route index element={<Home />} />
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="player/:id" element={<Player />} />
           <Route path="play/:game/:play" element={<Play />} />

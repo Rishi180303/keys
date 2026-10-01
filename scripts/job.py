@@ -109,7 +109,8 @@ def stage_rate():
     meta = site.meta_json(RUN, api_url, summary, result, generated)
     dest = paths.DATA / "site"
     games = site.games_json(inp, out, pred, result["table"], sup)
-    files = site.write_site(dest, site.plays_json(result["table"]), games, meta)
+    reel = site.highlights(result["table"], games)
+    files = site.write_site(dest, site.plays_json(result["table"]), games, meta, reel)
     if SITE_BUCKET:
         sync.push(dest, SITE_BUCKET, "data/", extra={"CacheControl": "max-age=300", "ContentType": "application/json"})
     print("site data", len(files), "files", "pushed to" if SITE_BUCKET else "written to", SITE_BUCKET or dest)

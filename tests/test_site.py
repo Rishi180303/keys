@@ -119,9 +119,11 @@ def test_write_site_and_meta(tmp_path, rating_play):
     stale.parent.mkdir(parents=True)
     stale.write_text("{}")
     meta = site.meta_json("run1", "https://x.invalid/predict", {"le40": {"mean": 0.5}}, res, "2026-09-24T00:00:00Z")
-    files = site.write_site(tmp_path / "site", site.plays_json(res["table"]), site.games_json(inp, out, pred, res["table"], sup), meta)
+    games = site.games_json(inp, out, pred, res["table"], sup)
+    files = site.write_site(tmp_path / "site", site.plays_json(res["table"]), games, meta, [{"game": 1, "play": 1}])
     assert not stale.exists()
-    assert [f.name for f in files] == ["plays.json", "meta.json", "1.json"] and files[2].parent.name == "games"
+    assert [f.name for f in files] == ["plays.json", "meta.json", "highlights.json", "1.json"] and files[3].parent.name == "games"
+    assert files[2].read_text() == '[{"game":1,"play":1}]'
     m = json.loads(files[1].read_text())
     assert m["run"] == "run1" and m["api_url"] == "https://x.invalid/predict" and m["summary"] == {"le40": {"mean": 0.5}}
     assert m["gate"]["passed"] is False and set(m["shrink"]) == {"CB", "S"} and m["min_plays"] == 30

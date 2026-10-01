@@ -62,7 +62,11 @@ def _rate_setup(roots, monkeypatch, rating_play, supplementary_csv, gate):
 
 
 def test_local_rate_writes_ratings_and_site(roots, monkeypatch, rating_play, supplementary_csv):
+    from keys import site
+
     _rate_setup(roots, monkeypatch, rating_play, supplementary_csv, gate=True)
+    monkeypatch.setattr(site, "MIN_PLAYS", 1)  # so the one play season has a listed defender and a highlight
+    monkeypatch.setattr(site, "HIGHLIGHT_AIR", 6)
     _run("rate", monkeypatch)
     ratings = roots / "data" / "ratings"
     assert (ratings / "plays.parquet").exists() and json.loads((ratings / "checks.json").read_text())["passed"]
@@ -71,6 +75,8 @@ def test_local_rate_writes_ratings_and_site(roots, monkeypatch, rating_play, sup
     game = json.loads((roots / "data" / "site" / "games" / "1.json").read_text())
     assert [p["id"] for p in game["plays"][0]["players"]] == [1, 2, 3, 4]
     assert len(json.loads((roots / "data" / "site" / "plays.json").read_text())["rows"]) == 2
+    reel = json.loads((roots / "data" / "site" / "highlights.json").read_text())
+    assert [(h["id"], h["scene"]["play"]) for h in reel] == [(3, 1)] and reel[0]["scene"]["players"][0]["in"][0] == [40.0, 25.0]
 
 
 def test_local_rate_refuses_site_data_when_the_gate_fails(roots, monkeypatch, rating_play, supplementary_csv):
@@ -117,6 +123,9 @@ def test_rate_with_buckets_pulls_and_pushes(roots, monkeypatch, rating_play, sup
     keys = {k for (b, k) in fake_s3.store if b in ("art", "site")}
     assert {"ratings/run1/plays.parquet", "ratings/run1/checks.json", "data/plays.json", "data/meta.json", "data/games/1.json"} <= keys
     assert fake_s3.extra[("site", "data/meta.json")] == {"CacheControl": "max-age=300", "ContentType": "application/json"}
+    assert fake_s3.store[("site", "data/highlights.json")] == b"[]"
+    assert fake_s3.extra[("site", "data/highlights.json")] == fake_s3.extra[("site", "data/meta.json")]
     assert fake_s3.extra[("art", "ratings/run1/checks.json")] is None
     assert json.loads(fake_s3.store[("site", "data/meta.json")])["summary"] == {"le40": {"mean": 0.5}}
     assert (roots / "raw" / "supplementary_data.csv").exists()
+

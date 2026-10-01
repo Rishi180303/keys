@@ -141,14 +141,16 @@ def _dump(obj) -> str:
     return json.dumps(obj, separators=(",", ":"), allow_nan=False)
 
 
-def write_site(dest, plays: dict, games: dict[int, dict], meta: dict) -> list[Path]:
-    """plays.json, meta.json and games/<game_id>.json under dest, compact, no NaN allowed. Returns the files."""
+def write_site(dest, plays: dict, games: dict[int, dict], meta: dict, reel: list[dict]) -> list[Path]:
+    """plays.json, meta.json, highlights.json and games/<game_id>.json under dest, compact, no NaN allowed.
+
+    Returns the files."""
     dest = Path(dest)
     shutil.rmtree(dest, ignore_errors=True)
     (dest / "games").mkdir(parents=True, exist_ok=True)
-    files = [dest / "plays.json", dest / "meta.json"]
-    files[0].write_text(_dump(plays))
-    files[1].write_text(_dump(meta))
+    files = [dest / "plays.json", dest / "meta.json", dest / "highlights.json"]
+    for f, obj in zip(files, (plays, meta, reel)):
+        f.write_text(_dump(obj))
     for gid, g in games.items():
         f = dest / "games" / f"{gid}.json"
         f.write_text(_dump(g))

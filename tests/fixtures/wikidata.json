@@ -13,6 +13,66 @@
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16235657"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Ty Anthony Montgomery II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Ty%20Montgomery%202021%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16235657"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Tyler Anthony Montgomery II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Ty%20Montgomery%202021%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16894548"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Richard Christopher Rodgers II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Richard%20Rodgers%20Cropped.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
      "value": "1994-10-24T00:00:00Z"
     },
     "item": {
@@ -93,26 +153,6 @@
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
-     "value": "1992-06-19T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q5006569"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "C. J. Mosley"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/C.J.Mosley.png"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
      "value": "1994-10-24T00:00:00Z"
     },
     "item": {
@@ -147,6 +187,142 @@
     "image": {
      "type": "uri",
      "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Adam%20Shaheen%202018.png"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q139255421"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Drew Davis"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1992-06-19T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q5006569"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "C. J. Mosley"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/C.J.Mosley.png"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16235657"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Ty Montgomery"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Ty%20Montgomery%202021%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16235657"
+    },
+    "name": {
+     "xml:lang": "mul",
+     "type": "literal",
+     "value": "Ty Montgomery"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Ty%20Montgomery%202021%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q16894548"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Richard Rodgers"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Richard%20Rodgers%20Cropped.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19666235"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Steven Nelson"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Steven%20Nelson.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1993-01-22T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19877365"
+    },
+    "name": {
+     "xml:lang": "mul",
+     "type": "literal",
+     "value": "Quandre Diggs"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Quandre%20Diggs%20%2850746801588%29%20%28cropped%29.jpg"
     }
    },
    {
@@ -193,20 +369,300 @@
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
-     "value": "1998-09-23T00:00:00Z"
+     "value": "2000-04-14T00:00:00Z"
     },
     "item": {
      "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73699733"
+     "value": "http://www.wikidata.org/entity/Q73966581"
     },
     "name": {
      "xml:lang": "en",
      "type": "literal",
-     "value": "A. J. Terrell"
+     "value": "PS2"
     },
     "image": {
      "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/A.J.%20Terrell.jpg"
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Pat Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Frank Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Surtain Jr."
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "PSII"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "PS2"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Pat Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Frank Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Surtain Jr."
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "PSII"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "PS2"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Pat Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Frank Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Surtain Jr."
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "PSII"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
     }
    },
    {
@@ -229,6 +685,106 @@
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
+     "value": "1998-09-23T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73699733"
+    },
+    "name": {
+     "xml:lang": "mul",
+     "type": "literal",
+     "value": "AJ Terrell"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/A.J.%20Terrell.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1998-09-23T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73699733"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "A. J. Terrell"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/A.J.%20Terrell.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "2000-04-14T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q73966581"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Patrick Surtain II"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
      "value": "1999-10-03T00:00:00Z"
     },
     "item": {
@@ -245,6 +801,26 @@
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
+     "value": "2001-03-16T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q100331972"
+    },
+    "name": {
+     "xml:lang": "en",
+     "type": "literal",
+     "value": "Kyle Hamilton"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Kyle%20Hamilton.png"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
      "value": "1998-09-23T00:00:00Z"
     },
     "item": {
@@ -253,6 +829,26 @@
     },
     "name": {
      "xml:lang": "en",
+     "type": "literal",
+     "value": "Nahshon Wright"
+    },
+    "image": {
+     "type": "uri",
+     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Nahshon%20Wright%20%28front%29.jpg"
+    }
+   },
+   {
+    "born": {
+     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
+     "type": "literal",
+     "value": "1998-09-23T00:00:00Z"
+    },
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q106669335"
+    },
+    "name": {
+     "xml:lang": "mul",
      "type": "literal",
      "value": "Nahshon Wright"
     },
@@ -281,360 +877,48 @@
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
+     "value": "1999-10-03T00:00:00Z"
     },
     "item": {
      "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
+     "value": "http://www.wikidata.org/entity/Q114314473"
     },
     "name": {
-     "xml:lang": "en",
+     "xml:lang": "mul",
      "type": "literal",
-     "value": "PS2"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+     "value": "Alec Anderson"
     }
    },
    {
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
+     "value": "2001-03-16T00:00:00Z"
     },
     "item": {
      "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
+     "value": "http://www.wikidata.org/entity/Q124636013"
     },
     "name": {
      "xml:lang": "en",
      "type": "literal",
-     "value": "Pat Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
+     "value": "Decamerion Richardson"
     }
    },
    {
     "born": {
      "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
      "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
+     "value": "2001-03-16T00:00:00Z"
     },
     "item": {
      "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
+     "value": "http://www.wikidata.org/entity/Q124636013"
     },
     "name": {
-     "xml:lang": "en",
+     "xml:lang": "mul",
      "type": "literal",
-     "value": "Patrick Frank Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Surtain Jr."
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "PSII"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "PS2"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Pat Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Frank Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Surtain Jr."
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "PSII"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "PS2"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Pat Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Frank Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Surtain Jr."
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "PSII"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%20II.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Patrick%20Surtain%202021%20%2851650411936%29%20%28cropped%29.jpg"
-    }
-   },
-   {
-    "born": {
-     "datatype": "http://www.w3.org/2001/XMLSchema#dateTime",
-     "type": "literal",
-     "value": "2000-04-14T00:00:00Z"
-    },
-    "item": {
-     "type": "uri",
-     "value": "http://www.wikidata.org/entity/Q73966581"
-    },
-    "name": {
-     "xml:lang": "en",
-     "type": "literal",
-     "value": "Patrick Surtain II"
-    },
-    "image": {
-     "type": "uri",
-     "value": "http://commons.wikimedia.org/wiki/Special:FilePath/PSII2025.webp"
+     "value": "Decamerion Richardson"
     }
    }
   ]

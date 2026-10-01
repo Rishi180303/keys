@@ -75,7 +75,7 @@ def test_highlights_take_two_per_group_then_the_best_of_the_rest(monkeypatch):
         (1, 17, 6, "S", 20, "primary", 0.9, None, 3.0),
         (1, 18, 7, "S", 20, "primary", 0.8, None, 3.0),
         (1, 19, 8, "LB", 20, "primary", 0.5, None, 3.0),
-        (1, 20, 9, "LB", 20, "primary", 0.4, None, 3.0),
+        (1, 20, 9, "LB", 20, "primary", 0.5, None, 3.0),  # ties with player 8 inside one game: the play id decides
         (1, 21, 10, "CB", 20, "primary", 9.0, None, 3.0),  # his only rated play, so he is not listed
         (1, 22, 2, "CB", 14, "primary", 8.0, None, 3.0),  # too short in the air
         (1, 23, 2, "CB", 20, "help", 7.0, None, 3.0),  # not the primary defender
@@ -85,8 +85,10 @@ def test_highlights_take_two_per_group_then_the_best_of_the_rest(monkeypatch):
         (1, 27, 11, "S", 20, "primary", 0.0, "not catchable", 3.0),
     ]
     rows += [(3, 100 + i, i, grp, 20, "help", 0.0, None, 3.0) for i, grp in groups.items()]
-    table, games = _reel_inputs(rows)
-    assert [h["play"] for h in site.highlights(table, games)] == [10, 12, 15, 14, 16, 17, 19, 20]
+    table, games = _reel_inputs(rows[::-1])  # worst first, so the order has to come from the sort
+    reel = site.highlights(table, games)
+    assert [h["play"] for h in reel] == [10, 12, 15, 14, 16, 17, 19, 20]
+    assert [h["scene"]["play"] for h in reel] == [h["play"] for h in reel]  # each entry carries its own play
     assert [h["play"] for h in site.highlights(table, games, n=7)] == [10, 12, 15, 16, 17, 19, 20]
     assert [h["play"] for h in site.highlights(table, games, n=4)] == [10, 12, 16, 17]
     assert [h["play"] for h in site.highlights(table, games, n=20)] == [10, 12, 15, 14, 16, 17, 18, 19, 20]

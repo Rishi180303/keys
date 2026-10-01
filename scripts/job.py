@@ -2,8 +2,9 @@
 
 Environment: KEYS_DATA_BUCKET and KEYS_ARTIFACTS_BUCKET (unset means local files only), KEYS_RUN
 (default local), KEYS_FOLD (train only), KEYS_WEEKS (default 1-18), KEYS_EPOCHS (default 80),
-KEYS_SITE_BUCKET (rate and photos), KEYS_API_URL (rate only), KEYS_PHOTOS_EXCLUDE (photos only, nfl ids
-separated by commas that get no photo).
+KEYS_SITE_BUCKET (rate and photos), KEYS_API_URL (rate only), KEYS_PHOTOS_EXCLUDE (photos only: nfl ids
+separated by commas that get no photo on this run, on top of photos.EXCLUDED; every run starts from the whole
+roster, so an exclusion that should last belongs in photos.EXCLUDED).
 Roots: KEYS_RAW, KEYS_DATA, KEYS_MODELS, see keys/paths.py."""
 
 import json
@@ -118,15 +119,21 @@ def stage_rate():
 
 
 def stage_photos():
-    """Run by hand after a rate stage: python scripts/job.py photos with KEYS_RUN set to the rated run."""
+    """Run by hand after a rate stage: python scripts/job.py photos with KEYS_RUN set to the rated run.
+
+    It only uploads. A player left out of photos.json keeps his old file in the bucket until it is removed by hand."""
     table_path = paths.DATA / "ratings" / "plays.parquet"
     if DATA_BUCKET:
         sync.pull(DATA_BUCKET, "processed/", data.PROCESSED)
     if ART_BUCKET:
         sync.pull_file(ART_BUCKET, f"ratings/{RUN}/plays.parquet", table_path)
     inp, _ = data.load_weeks(WEEKS, columns=["nfl_id", "player_birth_date"])
-    excluded = {int(v) for v in os.environ.get("KEYS_PHOTOS_EXCLUDE", "").split(",") if v.strip()}
-    people = [p for p in photos.roster(pl.read_parquet(table_path), inp) if p["id"] not in excluded]
+    roster = photos.roster(pl.read_parquet(table_path), inp)
+    asked = {int(v) for v in os.environ.get("KEYS_PHOTOS_EXCLUDE", "").split(",") if v.strip()}
+    if asked - {p["id"] for p in roster}:
+        raise ValueError(f"KEYS_PHOTOS_EXCLUDE names ids that are not listed: {sorted(asked - {p['id'] for p in roster})}")
+    people = [p for p in roster if p["id"] not in photos.EXCLUDED | asked]
+    print("excluded", sorted(p["id"] for p in roster if p["id"] in photos.EXCLUDED | asked))
     dest = paths.DATA / "photos"
     index = photos.collect(people, dest)
     if not index:

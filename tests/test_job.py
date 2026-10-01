@@ -168,8 +168,23 @@ def test_local_photos_writes_the_photos_and_their_index(roots, monkeypatch, wiki
     monkeypatch.setenv("KEYS_PHOTOS_EXCLUDE", "12, 14")
     _run("photos", monkeypatch)
     dest = roots / "data" / "photos"
-    assert sorted(f.name for f in dest.iterdir()) == ["11.jpg", "13.webp", "photos.json"]
-    assert sorted(json.loads((dest / "photos.json").read_text())) == ["11", "13"]
+    assert sorted(f.name for f in dest.iterdir()) == ["11.jpg", "13.webp", "19.jpg", "photos.json"]
+    assert sorted(json.loads((dest / "photos.json").read_text())) == ["11", "13", "19"]
+
+
+def test_photos_leaves_out_the_built_in_exclusions_and_refuses_an_unknown_id(roots, monkeypatch, wikimedia, capsys):
+    from keys import photos
+
+    _photos_local(roots, monkeypatch)
+    monkeypatch.setattr(photos, "EXCLUDED", {13, 999})  # 999 is not listed this season, which is fine for the built in set
+    _run("photos", monkeypatch)
+    assert sorted(json.loads((roots / "data" / "photos" / "photos.json").read_text())) == ["11", "12", "14", "19"]
+    assert "excluded [13]\n" in capsys.readouterr().out
+    asked = len(wikimedia[0])
+    monkeypatch.setenv("KEYS_PHOTOS_EXCLUDE", "12,141")  # a typo for 14 must not pass quietly
+    with pytest.raises(ValueError, match="141"):
+        _run("photos", monkeypatch)
+    assert len(wikimedia[0]) == asked  # it stopped before asking anyone
 
 
 def test_photos_with_buckets_pulls_and_pushes(roots, monkeypatch, wikimedia, fake_s3):
@@ -189,12 +204,13 @@ def test_photos_with_buckets_pulls_and_pushes(roots, monkeypatch, wikimedia, fak
     monkeypatch.setattr(sync, "client", lambda: fake_s3)
     _run("photos", monkeypatch)
     pushed = [k for (b, k) in fake_s3.store if b == "site"]
-    assert pushed == ["data/photos/11.jpg", "data/photos/12.jpg", "data/photos/13.webp", "data/photos/14.png", "data/photos.json"]
+    photos = ["data/photos/11.jpg", "data/photos/12.jpg", "data/photos/13.webp", "data/photos/14.png", "data/photos/19.jpg"]
+    assert pushed == [*photos, "data/photos.json"]  # the index goes last
     assert fake_s3.extra[("site", "data/photos/11.jpg")] == {"CacheControl": "max-age=86400", "ContentType": "image/jpeg"}
     assert fake_s3.extra[("site", "data/photos/13.webp")] == {"CacheControl": "max-age=86400", "ContentType": "image/webp"}
     assert fake_s3.extra[("site", "data/photos/14.png")] == {"CacheControl": "max-age=86400", "ContentType": "image/png"}
     assert fake_s3.extra[("site", "data/photos.json")] == {"CacheControl": "max-age=300", "ContentType": "application/json"}
-    assert sorted(json.loads(fake_s3.store[("site", "data/photos.json")])) == ["11", "12", "13", "14"]
+    assert sorted(json.loads(fake_s3.store[("site", "data/photos.json")])) == ["11", "12", "13", "14", "19"]
 
 
 @pytest.mark.parametrize(("answer", "error"), [

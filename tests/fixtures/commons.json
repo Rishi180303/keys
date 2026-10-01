@@ -24,6 +24,11 @@
       "descriptionurl": "https://commons.wikimedia.org/wiki/File:C.J.Mosley.png",
       "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=29059603",
       "extmetadata": {
+       "Categories": {
+        "value": "C. J. Mosley (linebacker)|Executive Office of the President files|Alabama Crimson Tide at the White House (April 2013)",
+        "source": "commons-categories",
+        "hidden": ""
+       },
        "Artist": {
         "value": "Executive Office of the President",
         "source": "commons-desc-page"
@@ -64,6 +69,11 @@
       "descriptionurl": "https://commons.wikimedia.org/wiki/File:Jalen_Ramsey_2014.jpg",
       "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=37190493",
       "extmetadata": {
+       "Categories": {
+        "value": "CC-Zero|Jalen Ramsey|Florida State Seminoles football players|Self-published work|Photographs by Thomson200",
+        "source": "commons-categories",
+        "hidden": ""
+       },
        "Artist": {
         "value": "<a href=\"//commons.wikimedia.org/wiki/User:Thomson200\" title=\"User:Thomson200\">Thomson200</a>",
         "source": "commons-desc-page"
@@ -108,6 +118,11 @@
       "descriptionurl": "https://commons.wikimedia.org/wiki/File:Patrick_Surtain_II.jpg",
       "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=95222156",
       "extmetadata": {
+       "Categories": {
+        "value": "Patrick Surtain II|Flickr images reviewed by FlickreviewR 2|Alabama Crimson Tide at South Carolina Gamecocks (September 14, 2019)",
+        "source": "commons-categories",
+        "hidden": ""
+       },
        "Artist": {
         "value": "Gamecock Central",
         "source": "commons-desc-page"
@@ -119,6 +134,55 @@
        },
        "LicenseUrl": {
         "value": "https://creativecommons.org/licenses/by/2.0",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   {
+    "pageid": 97969598,
+    "ns": 6,
+    "title": "File:Quandre Diggs (50746801588) (cropped).jpg",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg/330px-Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 320,
+      "thumbheight": 442,
+      "thumbmime": "image/jpeg",
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg/960px-Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg/330px-Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 442,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg/960px-Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d4/Quandre_Diggs_%2850746801588%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Quandre_Diggs_(50746801588)_(cropped).jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=97969598",
+      "extmetadata": {
+       "Categories": {
+        "value": "Quandre Diggs|Extracted images|United States photographs taken on 2020-12-20|Seattle Seahawks at Washington Football Team (December 20, 2020)|Photographs by All-Pro Reels",
+        "source": "commons-categories",
+        "hidden": ""
+       },
+       "Artist": {
+        "value": "All-Pro Reels",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 2.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/2.0",
         "source": "commons-desc-page"
        }
       },
@@ -152,6 +216,11 @@
       "descriptionurl": "https://commons.wikimedia.org/wiki/File:Patrick_Surtain_2021_(51650411936)_(cropped).jpg",
       "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=112248684",
       "extmetadata": {
+       "Categories": {
+        "value": "Extracted images|Patrick Surtain II|Washington Football Team at Denver Broncos (October 31, 2021)|Photographs by All-Pro Reels|Number 2 on American football jerseys",
+        "source": "commons-categories",
+        "hidden": ""
+       },
        "Artist": {
         "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/10457902@N08\">All-Pro Reels</a> from District of Columbia, USA",
         "source": "commons-desc-page"
@@ -196,6 +265,11 @@
       "descriptionurl": "https://commons.wikimedia.org/wiki/File:A.J._Terrell.jpg",
       "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=118590042",
       "extmetadata": {
+       "Categories": {
+        "value": "Media from YouTube|Aundell Terrell Jr|Personality rights warning|Files from external sources with reviewed licenses|2022 Atlanta Falcons season|Still images from videos by Atlanta Falcons",
+        "source": "commons-categories",
+        "hidden": ""
+       },
        "Artist": {
         "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/c/AtlantaFalcons\">Atlanta Falcons</a>",
         "source": "commons-desc-page"
@@ -205,12 +279,71 @@
         "source": "commons-desc-page",
         "hidden": ""
        },
+       "Attribution": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/c/AtlantaFalcons\">Atlanta Falcons</a>",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
        "LicenseUrl": {
         "value": "https://creativecommons.org/licenses/by/3.0",
         "source": "commons-desc-page"
        }
       },
       "mime": "image/jpeg"
+     }
+    ]
+   },
+   {
+    "pageid": 122397299,
+    "ns": 6,
+    "title": "File:Kyle Hamilton.png",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Kyle_Hamilton.png/330px-Kyle_Hamilton.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 320,
+      "thumbheight": 427,
+      "thumbmime": "image/png",
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Kyle_Hamilton.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Kyle_Hamilton.png/330px-Kyle_Hamilton.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 427,
+       "srcset": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Kyle_Hamilton.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/b/b3/Kyle_Hamilton.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Kyle_Hamilton.png",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=122397299",
+      "extmetadata": {
+       "Categories": {
+        "value": "Media from YouTube|Personality rights warning|License review needed|Kyle Hamilton (American football)|Still images from videos by Atlanta Falcons",
+        "source": "commons-categories",
+        "hidden": ""
+       },
+       "Artist": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/c/AtlantaFalcons\">Atlanta Falcons</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "Attribution": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/c/AtlantaFalcons\">Atlanta Falcons</a>",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by/3.0",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/png"
      }
     ]
    },
@@ -236,6 +369,11 @@
       "descriptionurl": "https://commons.wikimedia.org/wiki/File:PSII2025.webp",
       "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=173820931",
       "extmetadata": {
+       "Categories": {
+        "value": "Extracted images|Patrick Surtain II|PD US Space Force",
+        "source": "commons-categories",
+        "hidden": ""
+       },
        "Artist": {
         "value": "Heather Johnson",
         "source": "commons-desc-page"

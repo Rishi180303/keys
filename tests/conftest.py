@@ -18,6 +18,8 @@ PEOPLE = [
     {"id": 16, "name": "Jalen Ramsey", "born": "1998-09-23"},  # the right name on the wrong birthday
     {"id": 17, "name": "Pete Werner", "born": "1998-06-05"},  # no football player on Wikidata was born that day
     {"id": 18, "name": "No Birthday", "born": None},
+    {"id": 19, "name": "Quandre Diggs", "born": "1993-01-22"},  # his only label on Wikidata is under mul
+    {"id": 20, "name": "Kyle Hamilton", "born": "2001-03-16"},  # Commons has not reviewed his picture's license
 ]
 IMAGE = {".jpg": b"\xff\xd8 jpeg", ".png": b"\x89PNG png", ".webp": b"RIFF webp"}
 
@@ -35,7 +37,7 @@ def roots(tmp_path, monkeypatch):
     """Point the data and model roots at a temp folder for one test, with no bucket variables set."""
     monkeypatch.setenv("KEYS_DATA", str(tmp_path / "data"))
     monkeypatch.setenv("KEYS_MODELS", str(tmp_path / "models"))
-    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN", "KEYS_SITE_BUCKET"):
+    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN", "KEYS_SITE_BUCKET", "KEYS_PHOTOS_EXCLUDE"):
         monkeypatch.delenv(name, raising=False)
     reload_roots()
     yield tmp_path

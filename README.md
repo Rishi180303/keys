@@ -26,7 +26,7 @@ Every flagged coverage defender gets a number called closing over expected. Know
 
 The rating is computed inside the pipeline after the model is published, and it has to pass its own checks before anything is written for the site: no coverage scheme, route, air time, starting distance, role or position moves the average by more than a quarter of the spread between players, and a defender's number in half the season has to line up with his number in the other half. If a check fails the site keeps the last data that passed.
 
-The same step picks eight highlights for the site. Each one is a different defender's best rated play on a throw that hung in the air for at least a second and a half, and every position group gets at least two. The pipeline saves them with everything a replay needs.
+The same step picks eight highlights for the site. Each one is a different defender's best rated play among those where he was the defender expected closest to the ball, the throw hung in the air for at least a second and a half, and he ended up closer to the ball than expected. Every position group gets at least two. The pipeline saves them with everything a replay needs.
 
 ## site
 
@@ -36,7 +36,7 @@ To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN
 
 ## photos
 
-Player photos come from Wikimedia Commons, because I have no right to use NFL headshots. A separate job looks up every listed defender on Wikidata. It only accepts a football player with the same name and the same birth date, since a name alone is not enough to be sure. It keeps a picture when Commons lists it under a Creative Commons attribution or share alike license, under CC0, or as public domain. It also saves the artist, the license and a link to the file page, so the site can credit every photo. On the 2023 season that found a photo for 217 of the 320 listed defenders. I run it by hand after the rating.
+Player photos come from Wikimedia Commons, because I have no right to use NFL headshots. A separate job looks up every listed defender on Wikidata. It only accepts a football player with the same name and the same birth date, since a name alone is not enough to be sure. It keeps a picture when Commons lists it under a Creative Commons attribution or share alike license, under CC0, or as public domain, and skips one whose license Commons has not finished checking. It also saves the credit, the license and a link to the file page, so the site can credit every photo. On the 2023 season that found a photo for 217 of the 320 listed defenders. Two more are left out by hand: one picture turned out to show a different player, and one has a child in the frame. I run it by hand after the rating.
 
 ## data
 

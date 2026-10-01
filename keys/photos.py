@@ -23,10 +23,14 @@ PAUSE = 0.5  # seconds between requests
 WIDTH = 320  # thumbnail width asked for; Commons answers with its nearest standard size
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 FREE = re.compile(r"CC BY(-SA)? \d.*|CC0.*|Public domain", re.IGNORECASE)
+DOUBT = re.compile(r"review needed|deletion request|missing permission|copyright violation", re.IGNORECASE)
 SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
 TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 MAGIC = {"jpg": b"\xff\xd8", "png": b"\x89PNG", "webp": b"RIFF"}
 CREDIT = ["artist", "license", "license_url", "source"]
+# listed defenders who get no photo whatever Wikidata offers: the one picture of 52493 has a child's face next to
+# his, and Commons says the picture on 54548's item shows another Georgia player
+EXCLUDED = {52493, 54548}
 
 
 def get(url: str, form: dict | None = None) -> bytes:
@@ -57,20 +61,23 @@ def plain(name: str) -> str:
 
 
 def query(dates: list[str]) -> str:
-    """SPARQL for every American football player born on one of the dates, with each English name and each image."""
+    """SPARQL for every American football player born on one of the dates, with each name and each image.
+
+    A name is a label or an alias in English or under mul, the code Wikidata uses for a name that is the same
+    in every language."""
     values = " ".join(f'"{d}T00:00:00Z"^^xsd:dateTime' for d in dates)
     return (
         f"SELECT ?born ?item ?name ?image WHERE {{ VALUES ?born {{ {values} }} "
         "?item wdt:P569 ?born ; wdt:P106 wd:Q19204627 ; rdfs:label|skos:altLabel ?name . "
-        'FILTER(LANG(?name) = "en") OPTIONAL { ?item wdt:P18 ?image } }'
+        'FILTER(LANG(?name) IN ("en", "mul")) OPTIONAL { ?item wdt:P18 ?image } }'
     )
 
 
 def match(people: list[dict]) -> dict[int, dict]:
     """Each player's Wikidata items and Commons file titles, as id -> {"items", "titles"}.
 
-    A player matches the American football player born on his birth date whose English label or alias is his
-    name, compared with plain(); a name plain() empties matches nobody. Players nobody matches are left out,
+    A player matches the American football player born on his birth date who has his name as a label or an
+    alias, compared with plain(); a name plain() empties matches nobody. Players nobody matches are left out,
     and a match without an image has no titles."""
     dates = sorted({p["born"] for p in people if DATE.fullmatch(p["born"] or "")})
     born: dict[str, dict[str, dict]] = {}
@@ -102,26 +109,31 @@ def licensed(titles: list[str]) -> dict[str, dict]:
     """The Commons files that may be shown with a credit, as title -> {"thumb", "ext", "artist", "license",
     "license_url", "source"}.
 
-    A file stays when its license is CC BY, CC BY-SA, CC0 or public domain and its thumbnail is a JPEG, PNG or WebP."""
+    A file stays when its license is CC BY, CC BY-SA, CC0 or public domain, none of its categories says Commons
+    still doubts that license (a review that is still needed, a deletion request), and its thumbnail is a JPEG,
+    PNG or WebP. The credit is the attribution the licensor asks for when there is one, else the artist."""
     out = {}
     for i in range(0, len(titles), 50):
         if i:
             time.sleep(PAUSE)
         reply = json.loads(get(COMMONS, {
             "action": "query", "format": "json", "formatversion": "2", "prop": "imageinfo",
-            "iiprop": "url|thumbmime|extmetadata", "iiextmetadatafilter": "Artist|LicenseShortName|LicenseUrl",
+            "iiprop": "url|thumbmime|extmetadata",
+            "iiextmetadatafilter": "Artist|Attribution|Categories|LicenseShortName|LicenseUrl",
             "iiurlwidth": str(WIDTH), "titles": "|".join(titles[i : i + 50]),
         }))
-        if "error" in reply or "continue" in reply:
+        # a lone title with older uploads comes with iistart and is whole; any other continue means a cut answer
+        if "error" in reply or set(reply.get("continue", {})) - {"iistart", "continue"}:
             raise ValueError(f"commons did not answer the whole query: {reply.get('error') or reply['continue']}")
         asked = {n["to"]: n["from"] for n in reply["query"].get("normalized", [])}
         for page in reply["query"]["pages"]:
             info = (page.get("imageinfo") or [{}])[0]
-            meta = {k: v["value"] for k, v in info.get("extmetadata", {}).items()}
+            meta = {k: v["value"] for k, v in (info.get("extmetadata") or {}).items()}  # [] when a file has none
             name, ext, url = meta.get("LicenseShortName", ""), TYPES.get(info.get("thumbmime")), meta.get("LicenseUrl", "")
-            if ext and FREE.fullmatch(name):
+            if ext and FREE.fullmatch(name) and not DOUBT.search(meta.get("Categories", "")):
                 out[asked.get(page["title"], page["title"])] = {
-                    "thumb": info["thumburl"], "ext": ext, "artist": credit(meta.get("Artist", "")), "license": name,
+                    "thumb": info["thumburl"], "ext": ext, "license": name,
+                    "artist": credit(meta.get("Attribution") or meta.get("Artist", "")),
                     "license_url": url if url.startswith(("http://", "https://")) else None, "source": info["descriptionurl"],
                 }
     return out

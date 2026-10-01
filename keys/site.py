@@ -21,6 +21,8 @@ STATIC = {
 FRAME = ["x", "y", "s", "a", "dir", "o"]
 PLAY_META = ["desc", "q", "clock", "down", "dist", "off", "result", "cov", "mz", "route", "dir", "yl", "nfo"]
 RATING_KEYS = ["id", "role", "d0", "dexp", "dact", "yards", "z", "zc", "ex"]
+HIGHLIGHT_AIR = 15  # air frames a highlight needs, a second and a half, so the replay has something to show
+HIGHLIGHT_KEYS = ["id", "name", "pos", "team", "zc", "yards", "dexp", "dact"]
 
 
 def _round(cols):
@@ -80,6 +82,34 @@ def games_json(inp: pl.DataFrame, out: pl.DataFrame, pred: pl.DataFrame, table: 
         play["players"], play["ratings"] = by_play[key], ratings.get(key, [])
         g["plays"].append(play)
     return games
+
+
+def highlights(table: pl.DataFrame, games: dict[int, dict], n: int = 8) -> list[dict]:
+    """The home page reel: the best rated plays with what a replay needs, at most one per listed defender.
+
+    A candidate is a rated play by a defender with MIN_PLAYS rated plays, in the primary role, with at least
+    HIGHLIGHT_AIR air frames, where he ended nearer the ball than expected, so the picture agrees with the caption.
+    The top two of every position group go in first, the best of the rest fill up to n, and the list is ordered
+    by zc; every tie breaks by game, then play. Each entry's scene is the play as the game file holds it, with
+    the input frames cut down to x and y."""
+    by, desc = ["zc", "game", "play"], [True, False, False]
+    rated = plays_table(table).filter(pl.col("ex").is_null())
+    best = (
+        rated.filter(pl.len().over("id") >= MIN_PLAYS)
+        .filter((pl.col("role") == "primary") & (pl.col("air") >= HIGHLIGHT_AIR) & (pl.col("dact") < pl.col("dexp")))
+        .sort(by, descending=desc)
+        .unique(subset="id", keep="first", maintain_order=True)
+    )
+    best = best.with_columns(floor=pl.int_range(pl.len()).over("grp") < 2)
+    picks = best.sort(["floor", *by], descending=[True, *desc]).head(n).sort(by, descending=desc)
+    reel = []
+    for r in picks.iter_rows(named=True):
+        game = games[r["game"]]
+        play = next(p for p in game["plays"] if p["play"] == r["play"])
+        scene = {**play, "players": [{**p, "in": [f[:2] for f in p["in"]]} for p in play["players"]]}
+        entry = {"game": r["game"], "play": r["play"], "week": game["week"], "home": game["home"], "away": game["away"]}
+        reel.append({**entry, **{k: r[k] for k in HIGHLIGHT_KEYS}, "scene": scene})
+    return reel
 
 
 def api_rows(game: dict, play: dict) -> list[dict]:

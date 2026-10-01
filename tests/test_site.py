@@ -45,6 +45,73 @@ def test_game_file_round_trips_the_input_rows(rating_play):
     assert_frame_equal(rows, expected, check_dtypes=False, abs_tol=0.006)
 
 
+def _reel_inputs(rows):
+    """A rated table and its game files from (game, play, id, grp, air frames, role, zc, ex, dexp) rows.
+
+    Every defender ends one yard from the ball, so a dexp above one means he beat the expectation."""
+    base = {
+        "week": 1, "name": "N", "pos": "CB", "team": "KC", "cov": "c", "mz": "zone", "route": "GO", "result": "C",
+        "epa": 0.0, "d0": 9.0, "dact": 1.0, "yards": 2.0, "z": 1.0,
+    }
+    names = ["game_id", "play_id", "nfl_id", "grp", "frames", "role", "zc", "ex", "dexp"]
+    table = pl.DataFrame([{**base, **dict(zip(names, r))} for r in rows], schema_overrides={"ex": pl.String})
+    games = {}
+    for game, play, *_ in rows:
+        g = games.setdefault(game, {"game": game, "week": 1, "home": "KC", "away": "DET", "plays": []})
+        g["plays"].append({"play": play, "players": []})
+    return table, games
+
+
+def test_highlights_take_two_per_group_then_the_best_of_the_rest(monkeypatch):
+    monkeypatch.setattr(site, "MIN_PLAYS", 2)
+    groups = {1: "CB", 2: "CB", 3: "CB", 4: "CB", 5: "S", 6: "S", 7: "S", 8: "LB", 9: "LB"}
+    rows = [
+        (1, 10, 1, "CB", 20, "primary", 3.0, None, 3.0),
+        (1, 11, 1, "CB", 20, "primary", 2.95, None, 3.0),  # his second best never shows: one play per player
+        (1, 12, 2, "CB", 15, "primary", 2.9, None, 3.0),  # fifteen air frames is enough
+        (2, 14, 3, "CB", 20, "primary", 2.8, None, 3.0),
+        (1, 15, 4, "CB", 20, "primary", 2.8, None, 3.0),  # ties with player 3 and wins on the game id
+        (1, 16, 5, "S", 20, "primary", 1.0, None, 3.0),
+        (1, 17, 6, "S", 20, "primary", 0.9, None, 3.0),
+        (1, 18, 7, "S", 20, "primary", 0.8, None, 3.0),
+        (1, 19, 8, "LB", 20, "primary", 0.5, None, 3.0),
+        (1, 20, 9, "LB", 20, "primary", 0.4, None, 3.0),
+        (1, 21, 10, "CB", 20, "primary", 9.0, None, 3.0),  # his only rated play, so he is not listed
+        (1, 22, 2, "CB", 14, "primary", 8.0, None, 3.0),  # too short in the air
+        (1, 23, 2, "CB", 20, "help", 7.0, None, 3.0),  # not the primary defender
+        (1, 24, 2, "CB", 20, "primary", 6.0, "not catchable", 3.0),  # not rated
+        (1, 25, 2, "CB", 20, "primary", 5.0, None, 1.0),  # no nearer the ball than expected
+        (1, 26, 11, "S", 20, "primary", 4.0, None, 3.0),  # one rated play and one excluded: not listed
+        (1, 27, 11, "S", 20, "primary", 0.0, "not catchable", 3.0),
+    ]
+    rows += [(3, 100 + i, i, grp, 20, "help", 0.0, None, 3.0) for i, grp in groups.items()]
+    table, games = _reel_inputs(rows)
+    assert [h["play"] for h in site.highlights(table, games)] == [10, 12, 15, 14, 16, 17, 19, 20]
+    assert [h["play"] for h in site.highlights(table, games, n=7)] == [10, 12, 15, 16, 17, 19, 20]
+    assert [h["play"] for h in site.highlights(table, games, n=4)] == [10, 12, 16, 17]
+    assert [h["play"] for h in site.highlights(table, games, n=20)] == [10, 12, 15, 14, 16, 17, 18, 19, 20]
+
+
+def test_highlight_entries_carry_the_play_with_trimmed_input(rating_play, monkeypatch):
+    inp, out, pred, sup = rating_play
+    table = _table(rating_play)
+    games = site.games_json(inp, out, pred, table, sup)
+    assert site.highlights(table, games) == []  # nobody in a one play season has thirty rated plays
+    monkeypatch.setattr(site, "MIN_PLAYS", 1)
+    monkeypatch.setattr(site, "HIGHLIGHT_AIR", 6)
+    [entry] = site.highlights(table, games)
+    scene, play = entry.pop("scene"), games[1]["plays"][0]
+    assert entry == {
+        "game": 1, "play": 1, "week": 1, "home": "KC", "away": "DET", "id": 3, "name": "Defender", "pos": "CB",
+        "team": "KC", "zc": 0.0, "yards": 1.0, "dexp": round(table["dexp"][0], 2), "dact": round(table["dact"][0], 2),
+    }
+    assert [p["in"] for p in scene["players"]] == [[f[:2] for f in p["in"]] for p in play["players"]]
+    assert len(scene["players"][0]["in"][0]) == 2 and len(play["players"][0]["in"][0]) == 6  # the game file keeps all six
+    assert [{**p, "in": None} for p in scene["players"]] == [{**p, "in": None} for p in play["players"]]
+    assert {**scene, "players": None} == {**play, "players": None}
+    assert json.loads(site._dump([entry]))[0]["id"] == 3
+
+
 def test_write_site_and_meta(tmp_path, rating_play):
     inp, out, pred, sup = rating_play
     res = rate.compute(inp, out, pred, sup)

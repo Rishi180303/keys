@@ -1,5 +1,6 @@
 import importlib
 import math
+import urllib.parse
 from pathlib import Path
 
 import polars as pl
@@ -18,6 +19,7 @@ PEOPLE = [
     {"id": 17, "name": "Pete Werner", "born": "1998-06-05"},  # no football player on Wikidata was born that day
     {"id": 18, "name": "No Birthday", "born": None},
 ]
+IMAGE = {".jpg": b"\xff\xd8 jpeg", ".png": b"\x89PNG png", ".webp": b"RIFF webp"}
 
 
 def reload_roots():
@@ -154,7 +156,8 @@ def fake_s3():
 def wikimedia(monkeypatch):
     """The recorded Wikidata and Commons answers in place of the network, and no pauses.
 
-    Returns (calls, answers): every (url, form) asked, and the answer for each address, which a test can replace."""
+    Returns (calls, answers): every (url, form) asked, and a dict a test can fill to answer an address itself,
+    with bytes or with an exception to raise. A thumbnail address answers with a tiny image of its type."""
     from keys import photos
 
     calls = []
@@ -162,7 +165,10 @@ def wikimedia(monkeypatch):
 
     def get(url, form=None):
         calls.append((url, form))
-        return answers[url]
+        answer = answers.get(url, IMAGE.get(Path(urllib.parse.urlparse(url).path).suffix.lower()))
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
 
     monkeypatch.setattr(photos, "get", get)
     monkeypatch.setattr(photos, "PAUSE", 0)

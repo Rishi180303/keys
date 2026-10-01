@@ -4,10 +4,13 @@ Wikimedia Commons offers under a free license, and write the thumbnails with the
 import html
 import json
 import re
+import shutil
 import time
 import unicodedata
+import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 import polars as pl
 
@@ -22,6 +25,8 @@ DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 FREE = re.compile(r"CC BY(-SA)? \d.*|CC0.*|Public domain", re.IGNORECASE)
 SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
 TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+MAGIC = {"jpg": b"\xff\xd8", "png": b"\x89PNG", "webp": b"RIFF"}
+CREDIT = ["artist", "license", "license_url", "source"]
 
 
 def get(url: str, form: dict | None = None) -> bytes:
@@ -120,3 +125,41 @@ def licensed(titles: list[str]) -> dict[str, dict]:
                     "license_url": url if url.startswith(("http://", "https://")) else None, "source": info["descriptionurl"],
                 }
     return out
+
+
+def collect(people: list[dict], dest) -> dict[str, dict]:
+    """Find, check and download every photo into dest and write photos.json next to them. Returns its content,
+    nfl id -> {"file", "artist", "license", "license_url", "source"}.
+
+    One line is printed per player so every match can be spot checked. A player whose own download fails is
+    skipped; Wikidata or Commons failing as a whole raises."""
+    dest = Path(dest)
+    found = match(people)
+    free = licensed(sorted({t for m in found.values() for t in m["titles"]}))
+    shutil.rmtree(dest, ignore_errors=True)
+    dest.mkdir(parents=True)
+    photos = {}
+    for p in people:
+        m = found.get(p["id"])
+        title = next((t for t in m["titles"] if t in free), None) if m else None
+        if title is None:
+            why = "no wikidata match" if m is None else "no free image" if m["titles"] else "no image"
+            print("no photo", p["id"], p["name"], why)
+            continue
+        pic = free[title]
+        time.sleep(PAUSE)
+        try:
+            body = get(pic["thumb"])
+        except urllib.error.HTTPError as e:
+            if e.code == 429 or e.code >= 500:
+                raise
+            body = b""
+        if not body.startswith(MAGIC[pic["ext"]]):
+            print("no photo", p["id"], p["name"], "download failed", title)
+            continue
+        name = f"{p['id']}.{pic['ext']}"
+        (dest / name).write_bytes(body)
+        photos[str(p["id"])] = {"file": name, **{k: pic[k] for k in CREDIT}}
+        print("photo", p["id"], p["name"], " ".join(m["items"]), title, pic["license"])
+    (dest / "photos.json").write_text(json.dumps(photos, separators=(",", ":")))
+    return photos

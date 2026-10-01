@@ -1,8 +1,9 @@
 import json
+import urllib.error
 
 import polars as pl
 import pytest
-from conftest import FIXTURES, PEOPLE
+from conftest import FIXTURES, IMAGE, PEOPLE
 
 from keys import photos
 from keys.rate import MIN_PLAYS
@@ -150,3 +151,68 @@ def test_credit_is_one_line_of_plain_text():
     assert photos.credit(flickr) == "All-Pro Reels from District of Columbia, USA"
     assert photos.credit("Office of Governor Walz &amp; Lt. Governor Flanagan") == "Office of Governor Walz & Lt. Governor Flanagan"
     assert len(photos.credit("x" * 500)) == 120 and photos.credit("") == ""
+
+
+def test_collect_writes_the_photos_and_their_credits(tmp_path, wikimedia, capsys):
+    dest = tmp_path / "photos"
+    dest.mkdir()
+    (dest / "999.jpg").write_bytes(b"stale")
+    index = photos.collect(PEOPLE, dest)
+    assert sorted(index) == ["11", "12", "13", "14"]
+    assert index["11"] == {
+        "file": "11.jpg", "artist": "Thomson200", "license": "CC0",
+        "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "https://commons.wikimedia.org/wiki/File:Jalen_Ramsey_2014.jpg",
+    }
+    assert index["13"]["file"] == "13.webp" and index["13"]["source"] == "https://commons.wikimedia.org/wiki/File:PSII2025.webp"
+    assert index["14"]["file"] == "14.png" and index["14"]["license_url"] is None
+    assert sorted(f.name for f in dest.iterdir()) == ["11.jpg", "12.jpg", "13.webp", "14.png", "photos.json"]
+    assert (dest / "14.png").read_bytes() == IMAGE[".png"] and json.loads((dest / "photos.json").read_text()) == index
+    lines = capsys.readouterr().out.splitlines()
+    assert "photo 11 Jalen Ramsey Q18631600 File:Jalen Ramsey 2014.jpg CC0" in lines
+    assert [line for line in lines if line.startswith("no photo")] == [
+        "no photo 15 Asante Samuel no image", "no photo 16 Jalen Ramsey no wikidata match",
+        "no photo 17 Pete Werner no wikidata match", "no photo 18 No Birthday no wikidata match",
+    ]
+
+
+def test_collect_skips_a_bad_download_and_takes_the_next_free_image(tmp_path, wikimedia, capsys):
+    _, answers = wikimedia
+    thumbs = {title: pic["thumb"] for title, pic in photos.licensed(TITLES).items()}
+
+    def change(reply, info):
+        info[SURTAIN[0]]["extmetadata"]["LicenseShortName"]["value"] = "GFDL"
+        info[MOSLEY]["extmetadata"]["LicenseShortName"]["value"] = "GFDL"
+
+    answers[photos.COMMONS] = _commons(change)
+    answers[thumbs[RAMSEY]] = urllib.error.HTTPError(thumbs[RAMSEY], 404, "Not Found", None, None)
+    answers[thumbs[TERRELL]] = b"<html>not an image</html>"
+    index = photos.collect(PEOPLE, tmp_path / "photos")
+    assert list(index) == ["13"] and index["13"]["file"] == "13.jpg" and index["13"]["license"] == "CC BY-SA 2.0"
+    out = capsys.readouterr().out
+    assert "no photo 11 Jalen Ramsey download failed File:Jalen Ramsey 2014.jpg" in out
+    assert "no photo 12 A.J. Terrell download failed" in out and "no photo 14 C.J. Mosley no free image" in out
+
+
+@pytest.mark.parametrize("failure", [
+    urllib.error.HTTPError("thumb", 503, "Service Unavailable", None, None),
+    urllib.error.HTTPError("thumb", 429, "Too Many Requests", None, None),
+    urllib.error.URLError("unreachable"),
+])
+def test_collect_stops_when_the_downloads_are_refused(tmp_path, wikimedia, failure):
+    _, answers = wikimedia
+    answers[photos.licensed([RAMSEY])[RAMSEY]["thumb"]] = failure
+    with pytest.raises(type(failure)):
+        photos.collect(PEOPLE, tmp_path / "photos")
+    assert not (tmp_path / "photos" / "photos.json").exists()
+
+
+def test_collect_leaves_the_last_photos_alone_when_wikidata_is_down(tmp_path, wikimedia):
+    _, answers = wikimedia
+    answers[photos.SPARQL] = urllib.error.URLError("unreachable")
+    dest = tmp_path / "photos"
+    dest.mkdir()
+    (dest / "11.jpg").write_bytes(b"last run")
+    with pytest.raises(urllib.error.URLError):
+        photos.collect(PEOPLE, dest)
+    assert (dest / "11.jpg").read_bytes() == b"last run"

@@ -124,7 +124,7 @@ export default function Play() {
           </h1>
           <p className="desc">{play.desc}</p>
           <p className="context">
-            {ordinal(play.down)} and {play.dist} in the {ordinal(play.q)} quarter, {play.clock} left. {cap(label(play.cov))}{" "}
+            {ordinal(play.down)} and {play.dist} in {play.q > 4 ? "overtime" : `the ${ordinal(play.q)} quarter`}, {play.clock} left. {cap(label(play.cov))}{" "}
             against a {label(play.route)} route, {(play.nfo / 10).toFixed(1)} seconds in the air.
           </p>
           <div className="scroll">
@@ -174,39 +174,31 @@ export default function Play() {
             Move the landing spot or change the air time and the live model draws where it would expect every flagged
             player to be. Drag the ring, or focus it and use the arrow keys (shift moves five yards).
           </p>
-          {editing ? (
-            <>
-              <label className="air">
-                Air time
-                <input
-                  type="range"
-                  min={5}
-                  max={40}
-                  value={air}
-                  onChange={(e) => setMoved({ scene, land, nfo: Number(e.target.value) })}
-                />
-                <span>{(air / 10).toFixed(1)} s</span>
-              </label>
-              <div className="whatif-buttons">
-                <button type="button" onClick={reset}>
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    reset();
-                    setEditing(false);
-                  }}
-                >
-                  Back to the replay
-                </button>
-              </div>
-            </>
-          ) : (
-            <button type="button" className="primary" onClick={() => setEditing(true)}>
-              Try a what if
-            </button>
+          {editing && (
+            <label className="air">
+              Air time
+              <input type="range" min={5} max={40} value={air} onChange={(e) => setMoved({ scene, land, nfo: Number(e.target.value) })} />
+              <span>{(air / 10).toFixed(1)} s</span>
+            </label>
           )}
+          {/* one button that stays put, so keyboard focus is never dropped when the mode changes */}
+          <div className="whatif-buttons">
+            <button
+              type="button"
+              className={editing ? "" : "primary"}
+              onClick={() => {
+                if (editing) reset();
+                setEditing(!editing);
+              }}
+            >
+              {editing ? "Back to the replay" : "Try a what if"}
+            </button>
+            {editing && (
+              <button type="button" onClick={reset}>
+                Reset
+              </button>
+            )}
+          </div>
           <p className={`status${ask.error ? " bad" : ""}`} aria-live="polite">
             {ask.status}
           </p>

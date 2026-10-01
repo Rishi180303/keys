@@ -64,6 +64,8 @@ export default function Home() {
   const [photos, setPhotos] = useState<Photos | null>(null);
   const [season, setSeason] = useState<{ rows: PlayRow[]; meta: Meta } | null>(null);
   const [tries, setTries] = useState(0);
+  const [seasonError, setSeasonError] = useState<string | null>(null);
+  const [seasonTries, setSeasonTries] = useState(0);
 
   useEffect(() => {
     setReelError(null);
@@ -80,10 +82,10 @@ export default function Home() {
     const timer = setTimeout(() => {
       Promise.all([loadPlays(), loadMeta()])
         .then(([rows, meta]) => setSeason({ rows, meta }))
-        .catch(() => {});
+        .catch((e: Error) => setSeasonError(e.message));
     }, 600);
     return () => clearTimeout(timer);
-  }, [reel, reelError]);
+  }, [reel, reelError, seasonTries]);
 
   const h = reel && reel.length ? reel[at % reel.length] : null;
   const scene = useMemo(() => (h ? buildScene(h.scene, h.id) : null), [h]);
@@ -141,6 +143,19 @@ export default function Home() {
       <section className="tops" aria-label="the best defenders at each position">
         {boards ? (
           boards.map((b, i) => <Top key={GROUPS[i]} grp={GROUPS[i]} players={b} photos={photos} />)
+        ) : seasonError ? (
+          <p className="season-error">
+            The leaderboard did not load ({seasonError}).{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setSeasonError(null);
+                setSeasonTries((n) => n + 1);
+              }}
+            >
+              Try again
+            </button>
+          </p>
         ) : (
           <p className="quiet">Loading the leaderboard</p>
         )}

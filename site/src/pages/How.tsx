@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
 import { label } from "../lib/format";
 import type { Cell, Meta, Photos } from "../lib/types";
@@ -49,9 +50,14 @@ function Credits() {
 export default function How() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { hash } = useLocation();
   useEffect(() => {
     loadMeta().then(setMeta).catch((e: Error) => setError(e.message));
   }, []);
+  // the router does not scroll to a #part, and the headings only exist once meta has arrived
+  useEffect(() => {
+    if (meta && hash) document.getElementById(hash.slice(1))?.scrollIntoView();
+  }, [meta, hash]);
   if (error) return <p className="page-msg">This page did not load ({error}).</p>;
   if (!meta) return <p className="page-msg quiet">Loading</p>;
   const g = meta.gate;

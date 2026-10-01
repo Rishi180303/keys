@@ -25,7 +25,8 @@
   --line-strong: rgba(148, 163, 184, 0.24);
   --text: #e5e7eb;
   --muted: #94a3b8;
-  --faint: #64748b;
+  /* the spec's #64748b measured 3.98:1 on the surface; this clears 4.5:1 for small text on every background here */
+  --faint: #8291a7;
   --accent: #38bdf8;
   --accent-light: #7dd3fc;
   --accent-soft: rgba(56, 189, 248, 0.14);
@@ -218,10 +219,19 @@ main {
   color: var(--faint);
   font-size: 12px;
 }
-.hits .none {
-  display: block;
+p.hits.none {
+  padding: 10px 12px;
+  font-size: 14px;
   color: var(--muted);
-  cursor: default;
+}
+/* read by screen readers, not shown */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 @media (max-width: 760px) {
   .menu-btn {
@@ -388,8 +398,15 @@ main {
 .rp-wait p {
   margin: 0 0 12px;
 }
+/* the same shape as the replay it stands in for, so the page does not jump when the play arrives */
+@media (max-width: 640px) and (orientation: portrait) {
+  .rp-wait {
+    aspect-ratio: 9 / 14;
+  }
+}
 .rp-wait button,
 .whatif button,
+.season-error button,
 .reel-nav .arrow {
   background: transparent;
   border: 1px solid var(--line-strong);
@@ -402,6 +419,7 @@ main {
 }
 .rp-wait button:hover,
 .whatif button:hover,
+.season-error button:hover,
 .reel-nav .arrow:hover {
   border-color: var(--accent);
 }
@@ -556,7 +574,7 @@ main {
 @media (max-width: 900px) {
   .tops,
   .tops.two {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 28px;
   }
   .intro h1 {
@@ -838,7 +856,7 @@ table.checks {
 }
 @media (max-width: 960px) {
   .player {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 520px) {
@@ -957,8 +975,9 @@ table.checks {
   font-size: 14px;
 }
 @media (max-width: 960px) {
+  /* minmax, not 1fr, so the wide defender table scrolls inside its box instead of widening the page */
   .play-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .play-info h1 {
     font-size: 30px;
@@ -971,6 +990,8 @@ table.checks {
   margin: 40px 0 0;
 }
 .how h2 {
+  /* clear the sticky nav when a link jumps to a heading */
+  scroll-margin-top: 76px;
   font-size: 26px;
   letter-spacing: 0.02em;
   margin: 44px 0 12px;

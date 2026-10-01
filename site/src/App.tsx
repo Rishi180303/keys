@@ -31,6 +31,7 @@ function Search({ onDone }: { onDone?: () => void }) {
   };
   const hits = players ? search(players, q) : [];
   const shown = open && q.trim() !== "";
+  const note = !shown ? "" : failed && !players ? "The defenders did not load. Try again in a moment." : !players ? "Loading the defenders" : !hits.length ? "No listed defender has that name" : "";
   const go = (p: PlayerRating) => {
     setQ("");
     setOpen(false);
@@ -72,11 +73,16 @@ function Search({ onDone }: { onDone?: () => void }) {
         onKeyDown={onKey}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
-      {shown && (
+      <span className="sr" role="status">
+        {note}
+      </span>
+      {shown && note && (
+        <p className="hits none" aria-hidden="true">
+          {note}
+        </p>
+      )}
+      {shown && hits.length > 0 && (
         <ul id={list} role="listbox" className="hits">
-          {failed && !players && <li className="none">The defenders did not load. Try again in a moment.</li>}
-          {!failed && !players && <li className="none">Loading the defenders</li>}
-          {players && !hits.length && <li className="none">No listed defender has that name</li>}
           {hits.map((p, i) => (
             <li
               key={p.id}
@@ -113,14 +119,14 @@ export default function App() {
     <>
       <header className="nav">
         <div className="nav-in">
-          <Link to="/" className="brand" aria-label="keys, home">
+          <Link to="/" className="brand" aria-label="keys, home" onClick={() => setMenu(false)}>
             KEYS
           </Link>
           <button type="button" className="menu-btn" aria-expanded={menu} aria-controls="nav-menu" onClick={() => setMenu(!menu)}>
             {menu ? "Close" : "Menu"}
           </button>
           <div id="nav-menu" className={`nav-menu${menu ? " open" : ""}`}>
-            <nav aria-label="pages">
+            <nav aria-label="pages" onClick={() => setMenu(false)}>
               <NavLink to="/" end>
                 Home
               </NavLink>

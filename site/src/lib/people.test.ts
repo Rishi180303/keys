@@ -3,7 +3,8 @@ import { board, listed, mainTeam, search } from "./people";
 import type { PlayerRating } from "./rating";
 import type { Meta, PlayRow } from "./types";
 
-const meta = { min_plays: 2, shrink: { CB: { within: 1, between: 1, k: 1 }, S: { within: 1, between: 1, k: 1 } } } as unknown as Meta;
+// different k per group, so a rating that took another group's shrinkage would change the order
+const meta = { min_plays: 2, shrink: { CB: { within: 1, between: 1, k: 1 }, S: { within: 1, between: 1, k: 3 } } } as unknown as Meta;
 
 function row(id: number, name: string, grp: string, zc: number, over: Partial<PlayRow> = {}): PlayRow {
   return {
@@ -22,7 +23,8 @@ const rows = [
 
 describe("listed and board", () => {
   it("lists every defender with enough rated plays, each with his own group's shrinkage", () => {
-    expect(listed(rows, meta).map((p) => p.id)).toEqual([3, 1, 2]);
+    // Ramsey 0.75 * 2 / 3 = 0.5, Ramírez 0.85 * 2 / 5 = 0.34, Clark 0.15 * 2 / 3 = 0.1
+    expect(listed(rows, meta).map((p) => p.id)).toEqual([1, 3, 2]);
     expect(board(rows, meta, "CB").map((p) => p.id)).toEqual([1, 2]);
     expect(board(rows, meta, "S").map((p) => p.id)).toEqual([3]);
   });
@@ -32,8 +34,11 @@ describe("search", () => {
   const players = listed(rows, meta);
   const names = (q: string) => search(players, q).map((p) => p.name);
   it("finds names from the start first, then from a later word, then anywhere", () => {
-    expect(names("ram")).toEqual(["José Ramírez", "Jalen Ramsey"]);
+    expect(names("ram")).toEqual(["Jalen Ramsey", "José Ramírez"]);
     expect(names("jal")).toEqual(["Jalen Ramsey"]);
+    // in leaderboard order the start match is last, so only the ranking puts it first
+    const ps = ["Desmond King", "Ann Smith", "Smith Jones"].map((name) => ({ name })) as unknown as PlayerRating[];
+    expect(search(ps, "sm").map((p) => p.name)).toEqual(["Smith Jones", "Ann Smith", "Desmond King"]);
   });
   it("ignores case, accents, punctuation and spaces", () => {
     expect(names("JOSE RAMIREZ")).toEqual(["José Ramírez"]);
@@ -49,9 +54,12 @@ describe("search", () => {
 });
 
 describe("mainTeam", () => {
-  it("is the team with the most rated plays, else the team of his last play", () => {
+  it("is the team with the most rated plays, else the team of his latest game", () => {
     const p = { teams: [{ team: "NE", n: 20 }, { team: "KC", n: 12 }], plays: [] } as unknown as PlayerRating;
     expect(mainTeam(p)).toBe("NE");
-    expect(mainTeam({ teams: [], plays: [{ team: "DET" }] } as unknown as PlayerRating)).toBe("DET");
+    // plays come best first, so the latest game is not the last element
+    const moved = { teams: [], plays: [{ team: "MIA", game: 2023121700 }, { team: "NE", game: 2023111200 }] };
+    expect(mainTeam(moved as unknown as PlayerRating)).toBe("MIA");
+    expect(mainTeam({ teams: [], plays: [] } as unknown as PlayerRating)).toBe("");
   });
 });

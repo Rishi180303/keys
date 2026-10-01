@@ -147,9 +147,11 @@ export default function Leaderboard() {
                         </span>
                       </td>
                       <td className="n">{t.n}</td>
-                      <td className="rating">
-                        <span className={`num ${tier}`}>{signed(t.mean)}</span>
-                        <Meter rating={t.mean} se={t.se} />
+                      <td>
+                        <span className="rating">
+                          <span className={`num ${tier}`}>{signed(t.mean)}</span>
+                          <Meter rating={t.mean} se={t.se} />
+                        </span>
                       </td>
                       <td>
                         <TierChip tier={tier} />
@@ -200,9 +202,11 @@ export default function Leaderboard() {
                       </span>
                     </td>
                     <td className="n">{p.n}</td>
-                    <td className="rating">
-                      <span className={`num ${p.tier}`}>{signed(p.rating)}</span>
-                      <Meter rating={p.rating} se={p.se} />
+                    <td>
+                      <span className="rating">
+                        <span className={`num ${p.tier}`}>{signed(p.rating)}</span>
+                        <Meter rating={p.rating} se={p.se} />
+                      </span>
                     </td>
                     <td>
                       <TierChip tier={p.tier} />

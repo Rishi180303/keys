@@ -16,7 +16,14 @@ export default function Player() {
   const [error, setError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<Photos | null>(null);
   const [at, setAt] = useState(0);
-  const [game, setGame] = useState<Game | null>(null);
+  // the reel starts at the top for each player; resetting during render means no render sees another player's index
+  const [reelOf, setReelOf] = useState(id);
+  if (reelOf !== id) {
+    setReelOf(id);
+    setAt(0);
+  }
+  // game files by id, so the reel finds the right file in the same render it moves to a play
+  const [games, setGames] = useState<Record<number, Game>>({});
   const [gameError, setGameError] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
 
@@ -26,7 +33,6 @@ export default function Player() {
       .catch((e: Error) => setError(e.message));
     loadPhotos().then(setPhotos);
   }, []);
-  useEffect(() => setAt(0), [id]);
 
   // everyone gets a card, but only a listed defender gets a rank in his group
   const me = useMemo(() => {
@@ -46,18 +52,19 @@ export default function Player() {
   useEffect(() => {
     if (!current) return;
     let stale = false;
-    setGame(null);
+    const keep = (g: Game) => setGames((m) => (m[g.game] ? m : { ...m, [g.game]: g }));
     setGameError(null);
     loadGame(current.game)
-      .then((g) => !stale && setGame(g))
+      .then(keep)
       .catch((e: Error) => !stale && setGameError(`This play did not load (${e.message}).`));
     const next = plays[at + 1];
-    if (next) loadGame(next.game).catch(() => {});
+    if (next) loadGame(next.game).then(keep, () => {});
     return () => {
       stale = true;
     };
   }, [current, plays, at, tries]);
 
+  const game = current ? games[current.game] : undefined;
   const scene = useMemo(() => {
     const play = game && current ? game.plays.find((q) => q.play === current.play) : null;
     return play ? buildScene(play, id) : null;
@@ -74,7 +81,7 @@ export default function Player() {
     <div className="player">
       <section className="pcard" aria-label="season card">
         <div className="pcard-top">
-          <Avatar id={p.id} name={p.name} team={team} photos={photos} size={112} square />
+          <Avatar key={p.id} id={p.id} name={p.name} team={team} photos={photos} size={112} square />
           <div>
             <h1>{p.name}</h1>
             <p className="pmeta">
@@ -107,7 +114,7 @@ export default function Player() {
       </section>
 
       <section className="preel" aria-label="his plays">
-        {scene ? (
+        {scene && !gameError ? (
           <Replay scene={scene} onEnd={() => setAt((i) => (i + 1 < plays.length ? i + 1 : 0))} />
         ) : (
           <ReplayWait error={gameError} onRetry={() => setTries((n) => n + 1)} />

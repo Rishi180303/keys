@@ -12,8 +12,9 @@ export function board(rows: PlayRow[], meta: Meta, grp: string): PlayerRating[] 
   return ratePlayers(applyFilters(rated(rows), f), meta.shrink, meta.min_plays);
 }
 
-/** The team a player is shown with: the one he has the most rated plays for, else the team of his last play. */
-export const mainTeam = (p: PlayerRating) => p.teams[0]?.team ?? p.plays[p.plays.length - 1]?.team ?? "";
+/** The team a player is shown with: the one he has the most rated plays for, else the team of his latest game.
+ * His plays are sorted best first, and game ids grow with the date. */
+export const mainTeam = (p: PlayerRating) => p.teams[0]?.team ?? [...p.plays].sort((a, b) => b.game - a.game)[0]?.team ?? "";
 
 const fold = (s: string) => s.normalize("NFKD").replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
 

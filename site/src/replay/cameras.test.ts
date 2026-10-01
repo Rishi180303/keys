@@ -76,6 +76,18 @@ describe("framing", () => {
   });
 });
 
+describe("broadcast distance", () => {
+  it("keeps its distance on a short throw: the field's width at the line of scrimmage spans under 1.4 screens", () => {
+    for (const depth of [3, 5, 8]) {
+      const s = buildScene(makePlay({ dir: "right", yl: 50, depth, across: 26 }));
+      const view = camera("broadcast", s, s.nIn - 1, WIDE);
+      const [a, b] = [view.project(0, 0), view.project(53.3, 0)];
+      expect(a && b, `depth ${depth}`).toBeTruthy();
+      expect(b![0] - a![0], `depth ${depth}`).toBeLessThan(1.4 * WIDE.w);
+    }
+  });
+});
+
 describe("blend", () => {
   it("starts at one view, ends at the other, and passes through the middle", () => {
     const scene = buildScene(makePlay({ dir: "left", yl: 60, depth: 25, across: 30 }));

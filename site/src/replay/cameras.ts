@@ -123,6 +123,9 @@ const eye = (at: V3, pitch: number, d: number): V3 => [at[0], at[1] - d * Math.c
 const ground = (pts: Pt[]): V3[] => pts.map(([l, u]): V3 => [l, u, 0]);
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
+/** The broadcast camera's least distance from what it looks at, in yards. */
+export const BROADCAST_MIN = 30;
+
 function broadcast(scene: Scene, frame: number, vp: Viewport): View {
   const focal = 0.62 * vp.w;
   // steeper on a tall screen, so the field fills the height instead of the sky
@@ -130,8 +133,9 @@ function broadcast(scene: Scene, frame: number, vp: Viewport): View {
   const setup = cached(scene, `b${vp.w}x${vp.h}`, () => {
     const pts = keyPoints(scene);
     const at = centerOf(pts);
-    // the ball's highest point stays in frame too
-    const d = fit(at, pitch, focal, vp, [...ground(pts), ballAt(scene, scene.nIn - 1 + scene.nfo / 2)], 5);
+    // the ball's highest point stays in frame too; never closer than BROADCAST_MIN, so a short throw is framed
+    // like television, about fifty yards across, instead of a close up where the nearest players fill the screen
+    const d = fit(at, pitch, focal, vp, [...ground(pts), ballAt(scene, scene.nIn - 1 + scene.nfo / 2)], BROADCAST_MIN);
     return { at, d, box: boxOf(pts, 0, 0, 0) };
   });
   // a slow push in while the ball is in the air

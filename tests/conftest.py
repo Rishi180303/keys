@@ -152,13 +152,13 @@ def fake_s3():
 
 @pytest.fixture
 def wikimedia(monkeypatch):
-    """The recorded Wikidata answer in place of the network, and no pauses.
+    """The recorded Wikidata and Commons answers in place of the network, and no pauses.
 
     Returns (calls, answers): every (url, form) asked, and the answer for each address, which a test can replace."""
     from keys import photos
 
     calls = []
-    answers = {photos.SPARQL: (FIXTURES / "wikidata.json").read_bytes()}
+    answers = {photos.SPARQL: (FIXTURES / "wikidata.json").read_bytes(), photos.COMMONS: (FIXTURES / "commons.json").read_bytes()}
 
     def get(url, form=None):
         calls.append((url, form))

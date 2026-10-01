@@ -1,0 +1,255 @@
+{
+ "batchcomplete": true,
+ "query": {
+  "pages": [
+   {
+    "pageid": 29059603,
+    "ns": 6,
+    "title": "File:C.J.Mosley.png",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/e/ec/C.J.Mosley.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "thumbwidth": 320,
+      "thumbheight": 427,
+      "thumbmime": "image/png",
+      "thumbattribs": {
+       "src": "https://upload.wikimedia.org/wikipedia/commons/e/ec/C.J.Mosley.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 427
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/ec/C.J.Mosley.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:C.J.Mosley.png",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=29059603",
+      "extmetadata": {
+       "Artist": {
+        "value": "Executive Office of the President",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "Public domain",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      },
+      "mime": "image/png"
+     }
+    ]
+   },
+   {
+    "pageid": 37190493,
+    "ns": 6,
+    "title": "File:Jalen Ramsey 2014.jpg",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Jalen_Ramsey_2014.jpg/330px-Jalen_Ramsey_2014.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 320,
+      "thumbheight": 329,
+      "thumbmime": "image/jpeg",
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Jalen_Ramsey_2014.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Jalen_Ramsey_2014.jpg/330px-Jalen_Ramsey_2014.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 329,
+       "srcset": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Jalen_Ramsey_2014.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Jalen_Ramsey_2014.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Jalen_Ramsey_2014.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=37190493",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a href=\"//commons.wikimedia.org/wiki/User:Thomson200\" title=\"User:Thomson200\">Thomson200</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   {
+    "pageid": 95222156,
+    "ns": 6,
+    "title": "File:Patrick Surtain II.jpg",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Patrick_Surtain_II.jpg/330px-Patrick_Surtain_II.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 320,
+      "thumbheight": 360,
+      "thumbmime": "image/jpeg",
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Patrick_Surtain_II.jpg/960px-Patrick_Surtain_II.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Patrick_Surtain_II.jpg/330px-Patrick_Surtain_II.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 360,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/Patrick_Surtain_II.jpg/960px-Patrick_Surtain_II.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Patrick_Surtain_II.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Patrick_Surtain_II.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=95222156",
+      "extmetadata": {
+       "Artist": {
+        "value": "Gamecock Central",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY 2.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by/2.0",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   {
+    "pageid": 112248684,
+    "ns": 6,
+    "title": "File:Patrick Surtain 2021 (51650411936) (cropped).jpg",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg/330px-Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 320,
+      "thumbheight": 447,
+      "thumbmime": "image/jpeg",
+      "responsiveUrls": {
+       "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg/960px-Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg/330px-Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 447,
+       "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg/960px-Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Patrick_Surtain_2021_%2851650411936%29_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Patrick_Surtain_2021_(51650411936)_(cropped).jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=112248684",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/10457902@N08\">All-Pro Reels</a> from District of Columbia, USA",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY-SA 2.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by-sa/2.0",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   {
+    "pageid": 118590042,
+    "ns": 6,
+    "title": "File:A.J. Terrell.jpg",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/df/A.J._Terrell.jpg/330px-A.J._Terrell.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "thumbwidth": 320,
+      "thumbheight": 427,
+      "thumbmime": "image/jpeg",
+      "responsiveUrls": {
+       "2": "https://upload.wikimedia.org/wikipedia/commons/d/df/A.J._Terrell.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+      },
+      "thumbattribs": {
+       "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/df/A.J._Terrell.jpg/330px-A.J._Terrell.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 427,
+       "srcset": "https://upload.wikimedia.org/wikipedia/commons/d/df/A.J._Terrell.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/df/A.J._Terrell.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:A.J._Terrell.jpg",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=118590042",
+      "extmetadata": {
+       "Artist": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/c/AtlantaFalcons\">Atlanta Falcons</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by/3.0",
+        "source": "commons-desc-page"
+       }
+      },
+      "mime": "image/jpeg"
+     }
+    ]
+   },
+   {
+    "pageid": 173820931,
+    "ns": 6,
+    "title": "File:PSII2025.webp",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/6/67/PSII2025.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "thumbwidth": 320,
+      "thumbheight": 709,
+      "thumbmime": "image/webp",
+      "thumbattribs": {
+       "src": "https://upload.wikimedia.org/wikipedia/commons/6/67/PSII2025.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 320,
+       "height": 709
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/6/67/PSII2025.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:PSII2025.webp",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=173820931",
+      "extmetadata": {
+       "Artist": {
+        "value": "Heather Johnson",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "Public domain",
+        "source": "commons-desc-page",
+        "hidden": ""
+       }
+      },
+      "mime": "image/webp"
+     }
+    ]
+   }
+  ]
+ }
+}

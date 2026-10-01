@@ -1,6 +1,7 @@
 """Free licensed player photos: find each listed defender on Wikidata by name and birth date, keep the images
 Wikimedia Commons offers under a free license, and write the thumbnails with their credits."""
 
+import html
 import json
 import re
 import time
@@ -13,10 +14,14 @@ import polars as pl
 from keys.rate import MIN_PLAYS
 
 SPARQL = "https://query.wikidata.org/sparql"
+COMMONS = "https://commons.wikimedia.org/w/api.php"
 AGENT = "keys-photos/1.0 (https://github.com/Rishi180303/keys)"
 PAUSE = 0.5  # seconds between requests
+WIDTH = 320  # thumbnail width asked for; Commons answers with its nearest standard size
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+FREE = re.compile(r"CC BY(-SA)? \d.*|CC0.*|Public domain", re.IGNORECASE)
 SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 
 
 def get(url: str, form: dict | None = None) -> bytes:
@@ -81,3 +86,37 @@ def match(people: list[dict]) -> dict[int, dict]:
         if items:
             found[p["id"]] = {"items": sorted(items), "titles": sorted({t for v in items.values() for t in v["titles"]})}
     return found
+
+
+def credit(artist: str) -> str:
+    """The Commons artist field, which is HTML, as one short line of plain text."""
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]*>", "", artist))).strip()[:120]
+
+
+def licensed(titles: list[str]) -> dict[str, dict]:
+    """The Commons files that may be shown with a credit, as title -> {"thumb", "ext", "artist", "license",
+    "license_url", "source"}.
+
+    A file stays when its license is CC BY, CC BY-SA, CC0 or public domain and its thumbnail is a JPEG, PNG or WebP."""
+    out = {}
+    for i in range(0, len(titles), 50):
+        if i:
+            time.sleep(PAUSE)
+        reply = json.loads(get(COMMONS, {
+            "action": "query", "format": "json", "formatversion": "2", "prop": "imageinfo",
+            "iiprop": "url|thumbmime|extmetadata", "iiextmetadatafilter": "Artist|LicenseShortName|LicenseUrl",
+            "iiurlwidth": str(WIDTH), "titles": "|".join(titles[i : i + 50]),
+        }))
+        if "error" in reply or "continue" in reply:
+            raise ValueError(f"commons did not answer the whole query: {reply.get('error') or reply['continue']}")
+        asked = {n["to"]: n["from"] for n in reply["query"].get("normalized", [])}
+        for page in reply["query"]["pages"]:
+            info = (page.get("imageinfo") or [{}])[0]
+            meta = {k: v["value"] for k, v in info.get("extmetadata", {}).items()}
+            name, ext, url = meta.get("LicenseShortName", ""), TYPES.get(info.get("thumbmime")), meta.get("LicenseUrl", "")
+            if ext and FREE.fullmatch(name):
+                out[asked.get(page["title"], page["title"])] = {
+                    "thumb": info["thumburl"], "ext": ext, "artist": credit(meta.get("Artist", "")), "license": name,
+                    "license_url": url if url.startswith(("http://", "https://")) else None, "source": info["descriptionurl"],
+                }
+    return out

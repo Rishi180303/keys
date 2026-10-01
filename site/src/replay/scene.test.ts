@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { along, ballAt, buildScene, FIELD_W, ghostAt } from "./scene";
+import { along, ballAt, buildScene, FIELD_W, ghostAt, type Scene } from "./scene";
 import { makePlay } from "./testplays";
 
 describe("buildScene", () => {
@@ -23,6 +23,14 @@ describe("buildScene", () => {
     expect(corner.path[0]).toEqual(corner.path[5]);
     const backer = s.actors.find((a) => a.id === 5)!;
     expect(backer.path[s.frames - 1]).toEqual(backer.path[s.nIn - 1]);
+  });
+  it("builds the same scene from input frames cut down to x and y, the way highlights.json carries them", () => {
+    const play = makePlay({ dir: "left", yl: 60, depth: 40, across: 20 });
+    const trimmed = { ...play, players: play.players.map((p) => ({ ...p, in: p.in.map((f) => f.slice(0, 2)) })) };
+    // everything but the play it was built from; JSON drops the two coordinate functions
+    const parts = (s: Scene) => JSON.stringify({ ...s, play: null });
+    expect(trimmed.players[0].in[0]).toHaveLength(2);
+    expect(parts(buildScene(trimmed))).toBe(parts(buildScene(play)));
   });
   it("gives flagged players a ghost that starts at their throw spot, and the spread across then downfield", () => {
     const s = buildScene(makePlay({ dir: "right", yl: 50, depth: 25, across: 14 }));

@@ -1,8 +1,8 @@
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import App from "./App";
-import About from "./pages/About";
+import How from "./pages/How";
 import Leaderboard from "./pages/Leaderboard";
 import Play from "./pages/Play";
 import Player from "./pages/Player";
@@ -20,7 +20,9 @@ createRoot(document.getElementById("root")!).render(
           <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="player/:id" element={<Player />} />
           <Route path="play/:game/:play" element={<Play />} />
-          <Route path="about" element={<About />} />
+          <Route path="how" element={<How />} />
+          {/* the phase 3 address of how it works */}
+          <Route path="about" element={<Navigate to="/how" replace />} />
           {import.meta.env.DEV && (
             <Route
               path="lab/:game/:play"

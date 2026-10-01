@@ -16,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<App />}>
           <Route index element={<Leaderboard />} />
+          <Route path="leaderboard" element={<Leaderboard />} />
           <Route path="play/:game/:play" element={<Play />} />
           <Route path="about" element={<About />} />
           {import.meta.env.DEV && (

@@ -1,34 +1,24 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
-import { loadMeta, loadPlays } from "../lib/data";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
+import { groupName, label, pct, signed } from "../lib/format";
+import { mainTeam } from "../lib/people";
 import { applyFilters, rated, ratePlayers, rateTeams, tierOf, type Filters } from "../lib/rating";
-import type { Meta, PlayRow } from "../lib/types";
+import { badge, teamName } from "../lib/teams";
+import type { Meta, Photos, PlayRow } from "../lib/types";
+import { Avatar, Meter, TierChip } from "../ui";
 
 /** The tabs: one per position group, then every team's defenders together. */
 const GROUPS = ["CB", "S", "LB", "teams"] as const;
-export const signed = (v: number, d = 2) => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(d);
-const pct = (v: number) => `${Math.round(v * 100)}%`;
-const label = (s: string) => s.replace(/_/g, " ").toLowerCase();
-
-/** The rating with its interval, rating plus or minus two standard errors, on a fixed scale from -1 to +1. */
-function Bar({ rating, se }: { rating: number; se: number }) {
-  const x = (v: number) => Math.min(100, Math.max(0, (v + 1) * 50));
-  const lo = x(rating - 2 * se);
-  return (
-    <span className="bar" aria-hidden="true">
-      <span className="zero" />
-      <span className="interval" style={{ left: `${lo}%`, width: `${x(rating + 2 * se) - lo}%` }} />
-      <span className="point" style={{ left: `${x(rating)}%` }} />
-    </span>
-  );
-}
+const TAB_NAMES: Record<string, string> = { CB: "Corners", S: "Safeties", LB: "Linebackers", teams: "Teams" };
 
 export default function Leaderboard() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [rows, setRows] = useState<PlayRow[] | null>(null);
+  const [photos, setPhotos] = useState<Photos | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({ grp: "CB", cov: "any", route: "any", role: "any", team: "any", minPlays: 30 });
-  const [open, setOpen] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     Promise.all([loadMeta(), loadPlays()])
@@ -38,6 +28,7 @@ export default function Leaderboard() {
         setFilters((f) => ({ ...f, minPlays: m.min_plays }));
       })
       .catch((e: Error) => setError(e.message));
+    loadPhotos().then(setPhotos);
   }, []);
 
   const options = useMemo(() => {
@@ -55,33 +46,31 @@ export default function Leaderboard() {
     [rows, filters, teamView],
   );
 
-  if (error) return <p className="error">{error}</p>;
-  if (!rows || !meta) return <p className="loading">loading the season</p>;
-  const set = (patch: Partial<Filters>) => {
-    setFilters({ ...filters, ...patch });
-    setOpen(null);
-  };
+  if (error) return <p className="page-msg">The season did not load ({error}).</p>;
+  if (!rows || !meta) return <p className="page-msg quiet">Loading the season</p>;
+  const set = (patch: Partial<Filters>) => setFilters({ ...filters, ...patch });
   const k = meta.shrink[filters.grp]?.k;
 
   return (
-    <section>
-      <h1>closing over expected</h1>
-      <p className="lede">
-        Knowing where and when the ball came down, the model predicts where a typical defender would be at the catch
-        point from this player's spot at the throw. The rating is how much closer he actually got, in units of the
-        model's own spread, compared with defenders in the same situation, averaged over his plays. It is a movement
-        stat and says nothing about whether the pass was caught. <Link to="/about">How it is computed and checked.</Link>
-      </p>
-      <div className="tabs" role="tablist">
+    <div className="board-page">
+      <header className="board-head">
+        <h1>Leaderboard</h1>
+        <p>
+          How much closer to the catch point each defender got than the model expected, in the model's own units,
+          averaged over his rated plays. It measures pursuit after the throw, not whether the pass was caught.{" "}
+          <Link to="/how">How it is computed and checked</Link>
+        </p>
+      </header>
+      <div className="tabs" role="tablist" aria-label="position group">
         {GROUPS.map((g) => (
-          <button key={g} role="tab" aria-selected={filters.grp === g} className={filters.grp === g ? "on" : ""} onClick={() => set({ grp: g })}>
-            {g}
+          <button key={g} type="button" role="tab" aria-selected={filters.grp === g} onClick={() => set({ grp: g })}>
+            {TAB_NAMES[g]}
           </button>
         ))}
       </div>
       <div className="filters">
         <label>
-          coverage
+          Coverage
           <select value={filters.cov} onChange={(e) => set({ cov: e.target.value })}>
             <option value="any">any</option>
             <option value="man">man</option>
@@ -94,7 +83,7 @@ export default function Leaderboard() {
           </select>
         </label>
         <label>
-          route
+          Route
           <select value={filters.route} onChange={(e) => set({ route: e.target.value })}>
             <option value="any">any</option>
             {options.route.map((r) => (
@@ -105,7 +94,7 @@ export default function Leaderboard() {
           </select>
         </label>
         <label>
-          role
+          Role
           <select value={filters.role} onChange={(e) => set({ role: e.target.value })}>
             <option value="any">any</option>
             <option value="primary">primary, closest expected to the ball</option>
@@ -114,52 +103,56 @@ export default function Leaderboard() {
         </label>
         {!teamView && (
           <label>
-            team
+            Team
             <select value={filters.team} onChange={(e) => set({ team: e.target.value })}>
               <option value="any">any</option>
               {options.team.map((t) => (
                 <option key={t} value={t}>
-                  {t}
+                  {teamName(t)}
                 </option>
               ))}
             </select>
           </label>
         )}
         <label>
-          at least
-          <input
-            type="number"
-            min={1}
-            value={filters.minPlays}
-            onChange={(e) => set({ minPlays: Math.max(1, Number(e.target.value) || 1) })}
-          />
+          At least
+          <input type="number" min={1} value={filters.minPlays} onChange={(e) => set({ minPlays: Math.max(1, Number(e.target.value) || 1) })} />
           {teamView ? "defender plays" : "plays"}
         </label>
       </div>
-      {teamView && (
+
+      {teamView ? (
         <>
           <div className="scroll">
             <table className="board">
               <thead>
                 <tr>
-                  <th>team</th>
-                  <th>defender plays</th>
-                  <th>rating</th>
-                  <th>tier</th>
+                  <th className="r">#</th>
+                  <th>Team</th>
+                  <th className="n">Defender plays</th>
+                  <th>Rating</th>
+                  <th>Tier</th>
                 </tr>
               </thead>
               <tbody>
-                {teams.map((t) => {
+                {teams.map((t, i) => {
                   const tier = tierOf(t.mean, t.se);
                   return (
-                    <tr key={t.team} className={tier}>
-                      <td>{t.team}</td>
-                      <td>{t.n}</td>
+                    <tr key={t.team}>
+                      <td className="r">{i + 1}</td>
+                      <td>
+                        <span className="who">
+                          <span className="swatch" style={{ background: badge(t.team).bg }} aria-hidden="true" />
+                          <b>{teamName(t.team)}</b>
+                        </span>
+                      </td>
+                      <td className="n">{t.n}</td>
                       <td className="rating">
-                        {signed(t.mean)} <Bar rating={t.mean} se={t.se} />
+                        <span className={`num ${tier}`}>{signed(t.mean)}</span>
+                        <Meter rating={t.mean} se={t.se} />
                       </td>
                       <td>
-                        <span className={`tier ${tier}`}>{tier}</span>
+                        <TierChip tier={tier} />
                       </td>
                     </tr>
                   );
@@ -168,98 +161,69 @@ export default function Leaderboard() {
             </table>
           </div>
           <p className="caption">
-            {teams.length} teams with at least {filters.minPlays} defender plays. A team's number is the plain mean of
-            the per play values of its flagged defenders, every position together, on the plays the filters keep, with
-            no shrinkage. The bar is that mean plus or minus two standard errors on a scale from minus one to plus one;
-            above and below mean that interval clears zero. A team's scheme and its players cannot be told apart in one season, so this is both.
+            {teams.length} teams with at least {filters.minPlays} defender plays. A team's number is the plain mean of the
+            per play values of its flagged defenders, every position together, on the plays the filters keep, with no
+            shrinkage. The bar is that mean plus or minus two standard errors on a scale from minus one to plus one;
+            above and below average mean that interval clears zero. A team's scheme and its players cannot be told apart
+            in one season, so this is both.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="scroll">
+            <table className="board">
+              <thead>
+                <tr>
+                  <th className="r">#</th>
+                  <th>Player</th>
+                  <th className="n">Plays</th>
+                  <th>Rating</th>
+                  <th>Tier</th>
+                  <th className="n">Yards closer</th>
+                  <th className="n">Completion rate</th>
+                  <th className="n">EPA per play</th>
+                </tr>
+              </thead>
+              <tbody>
+                {players.map((p, i) => (
+                  <tr key={p.id} className="link-row" onClick={() => navigate(`/player/${p.id}`)}>
+                    <td className="r">{i + 1}</td>
+                    <td>
+                      <span className="who">
+                        <Avatar id={p.id} name={p.name} team={mainTeam(p)} photos={photos} size={32} />
+                        <Link to={`/player/${p.id}`} onClick={(e) => e.stopPropagation()}>
+                          <b>{p.name}</b>
+                        </Link>
+                        <span className="meta">
+                          {p.pos} {p.teams.map((t) => t.team).join(" ")}
+                        </span>
+                      </span>
+                    </td>
+                    <td className="n">{p.n}</td>
+                    <td className="rating">
+                      <span className={`num ${p.tier}`}>{signed(p.rating)}</span>
+                      <Meter rating={p.rating} se={p.se} />
+                    </td>
+                    <td>
+                      <TierChip tier={p.tier} />
+                    </td>
+                    <td className="n">{signed(p.yards)}</td>
+                    <td className="n">{pct(p.comp)}</td>
+                    <td className="n">{p.epa === null ? "" : signed(p.epa)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="caption">
+            {players.length} {groupName(filters.grp)} with at least {filters.minPlays} rated plays. The rating is the mean
+            of the per play values, shrunk toward zero with k of {k === undefined ? "?" : k.toFixed(0)} plays for this
+            position. The bar is the rating plus or minus two standard errors on a scale from minus one to plus one;
+            above and below average mean that interval clears zero. Completion rate and EPA are what happened on the
+            same plays; the rating does not predict either.
           </p>
         </>
       )}
-      {!teamView && (
-      <>
-      <div className="scroll">
-      <table className="board">
-        <thead>
-          <tr>
-            <th>player</th>
-            <th>teams</th>
-            <th>plays</th>
-            <th>rating</th>
-            <th>tier</th>
-            <th>yards closer</th>
-            <th>completion rate</th>
-            <th>EPA per play</th>
-          </tr>
-        </thead>
-        <tbody>
-          {players.map((p) => (
-            <Fragment key={p.id}>
-              <tr className={`row ${p.tier}`} onClick={() => setOpen(open === p.id ? null : p.id)}>
-                <td>
-                  <button
-                    type="button"
-                    className="expand"
-                    aria-expanded={open === p.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpen(open === p.id ? null : p.id);
-                    }}
-                  >
-                    {p.name}
-                  </button>{" "}
-                  <span className="pos">{p.pos}</span>
-                </td>
-                <td>{p.teams.map((t) => t.team).join(", ")}</td>
-                <td>{p.n}</td>
-                <td className="rating">
-                  {signed(p.rating)} <Bar rating={p.rating} se={p.se} />
-                </td>
-                <td>
-                  <span className={`tier ${p.tier}`}>{p.tier}</span>
-                </td>
-                <td>{signed(p.yards)}</td>
-                <td>{pct(p.comp)}</td>
-                <td>{p.epa === null ? "" : signed(p.epa)}</td>
-              </tr>
-              {open === p.id && (
-                <tr className="plays">
-                  <td colSpan={8}>
-                    <table>
-                      <tbody>
-                        {p.plays.map((r) => (
-                          <tr key={`${r.game}-${r.play}`}>
-                            <td>week {r.week}</td>
-                            <td>{r.team}</td>
-                            <td>{label(r.cov)}</td>
-                            <td>{label(r.route)}</td>
-                            <td>{r.role}</td>
-                            <td>{r.result === "C" ? "complete" : r.result === "I" ? "incomplete" : "intercepted"}</td>
-                            <td>{signed(r.yards)} yd</td>
-                            <td>{signed(r.zc)}</td>
-                            <td>
-                              <Link to={`/play/${r.game}/${r.play}`}>watch</Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              )}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
-      </div>
-      <p className="caption">
-        {players.length} {filters.grp} with at least {filters.minPlays} rated plays. The rating is the mean of the
-        per play values, shrunk toward zero with k of {k === undefined ? "?" : k.toFixed(0)} plays for this position.
-        The bar is the rating plus or minus two standard errors on a scale from minus one to plus one; above and
-        below mean that interval clears zero. Completion rate and EPA are what happened on the same plays; the rating
-        does not predict either. Click a row for the plays.
-      </p>
-      </>
-      )}
-    </section>
+    </div>
   );
 }

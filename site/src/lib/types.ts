@@ -108,3 +108,26 @@ export type Play = {
 };
 
 export type Game = { game: number; week: number; home: string; away: string; plays: Play[] };
+
+/** One entry of highlights.json: a play for the home page reel, with its featured defender and the play itself
+ * as the game file holds it, input frames cut to x and y. */
+export type Highlight = {
+  game: number;
+  play: number;
+  week: number;
+  home: string;
+  away: string;
+  id: number;
+  name: string;
+  pos: string;
+  team: string;
+  zc: number;
+  yards: number;
+  dexp: number;
+  dact: number;
+  scene: Play;
+};
+
+/** A free licensed photo from photos.json, credited to its author; file sits under /data/photos/. */
+export type Photo = { file: string; artist: string; license: string; license_url: string | null; source: string };
+export type Photos = Record<string, Photo>;

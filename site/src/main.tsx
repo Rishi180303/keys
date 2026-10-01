@@ -1,6 +1,6 @@
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router";
 import App from "./App";
 import Home from "./pages/Home";
 import How from "./pages/How";
@@ -34,6 +34,14 @@ createRoot(document.getElementById("root")!).render(
               }
             />
           )}
+          <Route
+            path="*"
+            element={
+              <p className="page-msg">
+                There is no page here. <Link to="/">Go to the highlights</Link>
+              </p>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -30,9 +30,9 @@ The same step picks eight highlights for the site. Each one is a different defen
 
 ## site
 
-The website is a small React app on CloudFront. It reads three kinds of files the pipeline writes: one table with every rated defender play, one file per game with every player's tracking frames and the model's expected paths, and a meta file with the checks. The leaderboard is computed in the browser from the play table, so any combination of position, coverage, route, role and team works without a server. A teams tab does the same for whole defenses, as a plain mean with no shrinkage. The play viewer draws a play frame by frame with the actual paths next to the expected ones. The what if tool lets you drag the landing spot or move it with the arrow keys, or change the air time, and asks the live API what the model would expect instead.
+The website is a small React app on CloudFront. It opens on a reel of the season's highlights. Each play is replayed from the tracking data on a canvas, with a broadcast camera behind the offense, an overhead camera and a chase camera that rides along with the throw. The tracking data has no ball, so its flight is drawn from the passer to the landing spot. The leaderboard is computed in the browser from a table of every rated defender play, so any mix of position, coverage, route, role and team works without a server, and a teams tab does the same for whole defenses. Every defender has a page with his card and a reel of his plays, best first. A play page shows one pass with the model's expected path for each flagged defender, and its what if tool lets you move the landing spot or change the air time and asks the live API what the model would expect instead.
 
-To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format and the rows the what if tool sends to the API.
+To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format, the replay engine and the rows the what if tool sends to the API.
 
 ## photos
 

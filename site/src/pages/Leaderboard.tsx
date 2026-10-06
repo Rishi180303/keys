@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
 import { groupName, label, pct, signed } from "../lib/format";
@@ -71,6 +71,15 @@ export default function Leaderboard() {
     setQuery(q, { replace: true });
   };
   const k = meta.shrink[filters.grp]?.k;
+  // the arrow keys move between tabs, as a tab list is expected to work; only the chosen tab sits in the tab order
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    const g = GROUPS[(GROUPS.indexOf(filters.grp as (typeof GROUPS)[number]) + d + GROUPS.length) % GROUPS.length];
+    set({ grp: g });
+    document.getElementById(`tab-${g}`)?.focus();
+  };
 
   return (
     <div className="board-page">
@@ -82,9 +91,18 @@ export default function Leaderboard() {
           <Link to="/how">How it is computed and checked</Link>
         </p>
       </header>
-      <div className="tabs" role="tablist" aria-label="position group">
+      <div className="tabs" role="tablist" aria-label="position group" onKeyDown={onTabKey}>
         {GROUPS.map((g) => (
-          <button key={g} id={`tab-${g}`} type="button" role="tab" aria-selected={filters.grp === g} aria-controls="board-panel" onClick={() => set({ grp: g })}>
+          <button
+            key={g}
+            id={`tab-${g}`}
+            type="button"
+            role="tab"
+            aria-selected={filters.grp === g}
+            aria-controls="board-panel"
+            tabIndex={filters.grp === g ? 0 : -1}
+            onClick={() => set({ grp: g })}
+          >
             {TAB_NAMES[g]}
           </button>
         ))}

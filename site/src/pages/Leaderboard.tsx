@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
 import { groupName, label, pct, signed } from "../lib/format";
 import { mainTeam } from "../lib/people";
@@ -17,7 +17,11 @@ export default function Leaderboard() {
   const [rows, setRows] = useState<PlayRow[] | null>(null);
   const [photos, setPhotos] = useState<Photos | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<Filters>({ grp: "CB", cov: "any", route: "any", role: "any", team: "any", minPlays: 30 });
+  const [rest, setRest] = useState<Omit<Filters, "grp">>({ cov: "any", route: "any", role: "any", team: "any", minPlays: 30 });
+  // the tab lives in the address, so Back from a player returns to the same tab
+  const [query, setQuery] = useSearchParams();
+  const grp = GROUPS.find((g) => g === query.get("grp")) ?? "CB";
+  const filters: Filters = { ...rest, grp };
   const navigate = useNavigate();
   useTitle("Leaderboard");
 
@@ -26,7 +30,7 @@ export default function Leaderboard() {
       .then(([m, r]) => {
         setMeta(m);
         setRows(rated(r));
-        setFilters((f) => ({ ...f, minPlays: m.min_plays }));
+        setRest((f) => ({ ...f, minPlays: m.min_plays }));
       })
       .catch((e: Error) => setError(e.message));
     loadPhotos().then(setPhotos);
@@ -49,7 +53,10 @@ export default function Leaderboard() {
 
   if (error) return <p className="page-msg">The season did not load ({error}).</p>;
   if (!rows || !meta) return <p className="page-msg quiet">Loading the season</p>;
-  const set = (patch: Partial<Filters>) => setFilters({ ...filters, ...patch });
+  const set = ({ grp: g, ...patch }: Partial<Filters>) => {
+    if (g) setQuery(g === "CB" ? {} : { grp: g }, { replace: true });
+    setRest({ ...rest, ...patch });
+  };
   const k = meta.shrink[filters.grp]?.k;
 
   return (

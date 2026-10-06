@@ -17,11 +17,20 @@ export default function Leaderboard() {
   const [rows, setRows] = useState<PlayRow[] | null>(null);
   const [photos, setPhotos] = useState<Photos | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [rest, setRest] = useState<Omit<Filters, "grp">>({ cov: "any", route: "any", role: "any", team: "any", minPlays: 30 });
-  // the tab lives in the address, so Back from a player returns to the same tab
+  // the tab and the filters live in the address, so Back from a player returns to the same view and a view can be shared
   const [query, setQuery] = useSearchParams();
-  const grp = GROUPS.find((g) => g === query.get("grp")) ?? "CB";
-  const filters: Filters = { ...rest, grp };
+  const filters = useMemo<Filters>(() => {
+    const min = Number(query.get("min"));
+    const get = (k: string) => query.get(k) ?? "any";
+    return {
+      grp: GROUPS.find((g) => g === query.get("grp")) ?? "CB",
+      cov: get("cov"),
+      route: get("route"),
+      role: get("role"),
+      team: get("team"),
+      minPlays: min >= 1 ? Math.floor(min) : (meta?.min_plays ?? 30),
+    };
+  }, [query, meta]);
   const navigate = useNavigate();
   useTitle("Leaderboard");
 
@@ -30,7 +39,6 @@ export default function Leaderboard() {
       .then(([m, r]) => {
         setMeta(m);
         setRows(rated(r));
-        setRest((f) => ({ ...f, minPlays: m.min_plays }));
       })
       .catch((e: Error) => setError(e.message));
     loadPhotos().then(setPhotos);
@@ -53,9 +61,14 @@ export default function Leaderboard() {
 
   if (error) return <p className="page-msg">The season did not load ({error}).</p>;
   if (!rows || !meta) return <p className="page-msg quiet">Loading the season</p>;
-  const set = ({ grp: g, ...patch }: Partial<Filters>) => {
-    if (g) setQuery(g === "CB" ? {} : { grp: g }, { replace: true });
-    setRest({ ...rest, ...patch });
+  // only what differs from the defaults goes in the address
+  const set = (patch: Partial<Filters>) => {
+    const next = { ...filters, ...patch };
+    const q: Record<string, string> = {};
+    if (next.grp !== "CB") q.grp = next.grp;
+    for (const k of ["cov", "route", "role", "team"] as const) if (next[k] !== "any") q[k] = next[k];
+    if (next.minPlays !== meta.min_plays) q.min = String(next.minPlays);
+    setQuery(q, { replace: true });
   };
   const k = meta.shrink[filters.grp]?.k;
 

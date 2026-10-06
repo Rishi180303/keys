@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Tier } from "./lib/rating";
 import { badge, initials } from "./lib/teams";
 import type { Photos } from "./lib/types";
+
+const TITLE = "keys, closing over expected";
+/** The browser tab's title for this page: the page's own name, or the site's when it has none. */
+export function useTitle(title?: string | null) {
+  useEffect(() => {
+    document.title = title ? `${title}, keys` : TITLE;
+  }, [title]);
+}
 
 /** A player's free licensed photo, or a badge in his team's color with his initials when there is none or it fails. */
 export function Avatar({ id, name, team, photos, size = 36, square = false }: {

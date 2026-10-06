@@ -3,6 +3,7 @@ import { useLocation } from "react-router";
 import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
 import { label } from "../lib/format";
 import type { Cell, Meta, Photos } from "../lib/types";
+import { useTitle } from "../ui";
 
 const DIMS: Record<string, string> = {
   cov: "coverage type",
@@ -51,6 +52,7 @@ export default function How() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { hash } = useLocation();
+  useTitle("How it works");
   useEffect(() => {
     loadMeta().then(setMeta).catch((e: Error) => setError(e.message));
   }, []);

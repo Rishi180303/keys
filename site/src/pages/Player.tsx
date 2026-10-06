@@ -8,7 +8,7 @@ import { teamName } from "../lib/teams";
 import type { Game, Meta, Photos, PlayRow } from "../lib/types";
 import Replay from "../replay/Replay";
 import { buildScene } from "../replay/scene";
-import { Avatar, Meter, ReplayWait, Stat, TierChip } from "../ui";
+import { Avatar, Meter, ReplayWait, Stat, TierChip, useTitle } from "../ui";
 
 export default function Player() {
   const id = Number(useParams().id);
@@ -45,6 +45,7 @@ export default function Player() {
     return { p, rank, total: group.length };
   }, [season, id]);
 
+  useTitle(me?.p.name);
   const plays = me?.p.plays ?? [];
   const current = plays[at] ?? null;
 

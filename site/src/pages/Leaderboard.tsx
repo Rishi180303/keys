@@ -6,7 +6,7 @@ import { mainTeam } from "../lib/people";
 import { applyFilters, rated, ratePlayers, rateTeams, tierOf, type Filters } from "../lib/rating";
 import { badge, teamName } from "../lib/teams";
 import type { Meta, Photos, PlayRow } from "../lib/types";
-import { Avatar, Meter, TierChip } from "../ui";
+import { Avatar, Meter, TierChip, useTitle } from "../ui";
 
 /** The tabs: one per position group, then every team's defenders together. */
 const GROUPS = ["CB", "S", "LB", "teams"] as const;
@@ -19,6 +19,7 @@ export default function Leaderboard() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({ grp: "CB", cov: "any", route: "any", role: "any", team: "any", minPlays: 30 });
   const navigate = useNavigate();
+  useTitle("Leaderboard");
 
   useEffect(() => {
     Promise.all([loadMeta(), loadPlays()])

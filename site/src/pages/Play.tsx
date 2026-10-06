@@ -8,7 +8,7 @@ import type { Game, Meta } from "../lib/types";
 import Replay, { type WhatIf } from "../replay/Replay";
 import { buildScene, type Pt, type Scene } from "../replay/scene";
 import { whatIfPaths } from "../replay/whatif";
-import { ReplayWait } from "../ui";
+import { ReplayWait, useTitle } from "../ui";
 
 /** After this long the status says the model may be waking up, which takes up to half a minute after a deploy. */
 const SLOW_MS = 3000;
@@ -49,6 +49,7 @@ export default function Play() {
   }, [gameId, tries]);
 
   const index = game && game.game === gameId ? game.plays.findIndex((p) => p.play === playId) : -1;
+  useTitle(index >= 0 ? `Week ${game!.week}, ${teamName(game!.away)} at ${teamName(game!.home)}` : null);
   const play = index >= 0 ? game!.plays[index] : null;
   const scene = useMemo(() => (play ? buildScene(play, featured) : null), [play, featured]);
   const mine = moved && moved.scene === scene ? moved : null;

@@ -8,7 +8,7 @@ import { badge, teamName } from "../lib/teams";
 import type { Highlight, Meta, Photos, PlayRow } from "../lib/types";
 import Replay from "../replay/Replay";
 import { buildScene } from "../replay/scene";
-import { Avatar, Meter, ReplayWait } from "../ui";
+import { Avatar, Meter, ReplayWait, useTitle } from "../ui";
 
 const GROUPS = ["CB", "S", "LB"];
 
@@ -66,6 +66,7 @@ export default function Home() {
   const [tries, setTries] = useState(0);
   const [seasonError, setSeasonError] = useState<string | null>(null);
   const [seasonTries, setSeasonTries] = useState(0);
+  useTitle();
 
   useEffect(() => {
     setReelError(null);

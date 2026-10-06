@@ -7,7 +7,17 @@ import How from "./pages/How";
 import Leaderboard from "./pages/Leaderboard";
 import Play from "./pages/Play";
 import Player from "./pages/Player";
+import { useTitle } from "./ui";
 import "./styles.css";
+
+function NotFound() {
+  useTitle("No page here");
+  return (
+    <p className="page-msg">
+      There is no page here. <Link to="/">Go to the highlights</Link>
+    </p>
+  );
+}
 
 // the replay lab exists only in development builds
 const ReplayLab = import.meta.env.DEV ? lazy(() => import("./pages/ReplayLab")) : () => null;
@@ -34,14 +44,7 @@ createRoot(document.getElementById("root")!).render(
               }
             />
           )}
-          <Route
-            path="*"
-            element={
-              <p className="page-msg">
-                There is no page here. <Link to="/">Go to the highlights</Link>
-              </p>
-            }
-          />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

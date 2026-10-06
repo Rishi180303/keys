@@ -64,7 +64,7 @@ export default function Leaderboard() {
       </header>
       <div className="tabs" role="tablist" aria-label="position group">
         {GROUPS.map((g) => (
-          <button key={g} type="button" role="tab" aria-selected={filters.grp === g} onClick={() => set({ grp: g })}>
+          <button key={g} id={`tab-${g}`} type="button" role="tab" aria-selected={filters.grp === g} aria-controls="board-panel" onClick={() => set({ grp: g })}>
             {TAB_NAMES[g]}
           </button>
         ))}
@@ -122,6 +122,7 @@ export default function Leaderboard() {
         </label>
       </div>
 
+      <div role="tabpanel" id="board-panel" aria-labelledby={`tab-${filters.grp}`}>
       {teamView ? (
         <>
           <div className="scroll">
@@ -229,6 +230,7 @@ export default function Leaderboard() {
           </p>
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -456,14 +456,16 @@ p.hits.none {
   border-radius: 50%;
 }
 .reel-nav .dot {
+  /* an 8px dot with a 24px tall tap target around it */
+  box-sizing: content-box;
   width: 8px;
   height: 8px;
-  padding: 0;
+  padding: 8px 4px;
   border: 0;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22) content-box;
   cursor: pointer;
-  transition: width 0.3s, background 0.3s;
+  transition: width 0.3s, background-color 0.3s;
 }
 .reel-nav .dot[aria-current="true"] {
   width: 24px;

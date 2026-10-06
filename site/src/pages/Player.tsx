@@ -134,7 +134,7 @@ export default function Player() {
                 <span className="pl-yd">{signed(r.yards)} yd</span>
                 <span className="pl-zc">{signed(r.zc)}</span>
               </button>
-              <Link to={`/play/${r.game}/${r.play}?d=${p.id}`} aria-label={`open week ${r.week} play`}>
+              <Link to={`/play/${r.game}/${r.play}?d=${p.id}`} aria-label={`open play ${i + 1}, week ${r.week}`}>
                 Open
               </Link>
             </li>

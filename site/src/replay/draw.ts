@@ -7,6 +7,8 @@ export type Theme = {
   turfNear: string;
   turfFar: string;
   endZone: string;
+  /** the ground past the end lines and sidelines, so a goal line play is not drawn against the void */
+  apron: string;
   /** r,g,b of the field markings */
   line: string;
   number: string;
@@ -28,6 +30,7 @@ export const NIGHT: Theme = {
   turfNear: "#111a23",
   turfFar: "#0a1016",
   endZone: "rgba(56,189,248,.05)",
+  apron: "#0a0f15",
   line: "148,163,184",
   number: "rgba(203,213,225,.28)",
   los: "#3b82f6",
@@ -182,6 +185,11 @@ export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp:
   ctx.fillStyle = theme.bg;
   ctx.fillRect(0, 0, vp.w, vp.h);
 
+  // the ground around the field, as far as a perspective camera sees, so the end lines are not the edge of the world
+  if (!view.flat && fillGround(ctx, view, [[-30, view.uMin], [FIELD_W + 30, view.uMin], [FIELD_W + 30, view.uMax], [-30, view.uMax]])) {
+    ctx.fillStyle = theme.apron;
+    ctx.fill();
+  }
   // turf, between the end lines, as far as the camera sees
   const fu0 = Math.min(uOf(0), uOf(120));
   const fu1 = Math.max(uOf(0), uOf(120));

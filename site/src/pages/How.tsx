@@ -22,7 +22,7 @@ const REASONS: Record<string, string> = {
 const signed = (v: number | null, d = 3) => (v === null ? "" : (v < 0 ? "−" : "+") + Math.abs(v).toFixed(d));
 
 /** Every photo the site shows, with its author, license and file page, as CC BY and CC BY-SA ask. */
-function Credits() {
+function Credits({ onReady }: { onReady: () => void }) {
   const [photos, setPhotos] = useState<Photos | null>(null);
   const [names, setNames] = useState<Map<number, string> | null>(null);
   useEffect(() => {
@@ -31,6 +31,10 @@ function Credits() {
       .then((rows) => setNames(new Map(rows.map((r) => [r.id, r.name]))))
       .catch(() => setNames(new Map()));
   }, []);
+  const ready = Boolean(photos && names);
+  useEffect(() => {
+    if (ready) onReady();
+  }, [ready, onReady]);
   if (!photos || !names) return <p className="quiet">Loading the credits</p>;
   const list = Object.entries(photos)
     .map(([id, p]) => ({ id, name: names.get(Number(id)) ?? `Player ${id}`, ...p }))
@@ -51,15 +55,17 @@ function Credits() {
 export default function How() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creditsReady, setCreditsReady] = useState(false);
   const { hash } = useLocation();
   useTitle("How it works");
   useEffect(() => {
     loadMeta().then(setMeta).catch((e: Error) => setError(e.message));
   }, []);
-  // the router does not scroll to a #part, and the headings only exist once meta has arrived
+  // the router does not scroll to a #part, the headings only exist once meta has arrived, and the page is only
+  // tall enough to put the photos heading at the top once the credits are in, so scroll again then
   useEffect(() => {
     if (meta && hash) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [meta, hash]);
+  }, [meta, hash, creditsReady]);
   if (error) return <p className="page-msg">This page did not load ({error}).</p>;
   if (!meta) return <p className="page-msg quiet">Loading</p>;
   const g = meta.gate;
@@ -201,7 +207,7 @@ export default function How() {
         under licenses that allow reuse with credit (CC BY, CC BY-SA, CC0 or public domain). A defender without one gets
         a badge in his team's color. No photo here is an NFL headshot.
       </p>
-      <Credits />
+      <Credits onReady={() => setCreditsReady(true)} />
     </article>
   );
 }

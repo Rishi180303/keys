@@ -19,6 +19,6 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.8 /uv /bin/uv
 # install the locked dependencies straight into the lambda python; --inexact keeps the runtime's own packages
 ENV UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1 UV_PYTHON_DOWNLOADS=never UV_PROJECT_ENVIRONMENT=/var/lang
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-dev --no-install-project --inexact
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --no-default-groups --no-install-project --inexact
 COPY keys ${LAMBDA_TASK_ROOT}/keys
 CMD ["keys.serve.handler"]

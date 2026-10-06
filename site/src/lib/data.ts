@@ -19,12 +19,19 @@ export function rowsFromColumns(file: PlaysFile): PlayRow[] {
 }
 
 const cache = new Map<string, Promise<unknown>>();
+/** Game files are the big ones and a long visit can touch dozens, so only the latest few stay in memory. */
+export const GAMES_KEPT = 6;
+const isGame = (path: string) => path.startsWith("/data/games/");
 
 function load<T>(path: string, convert: (raw: unknown) => T = (raw) => raw as T): Promise<T> {
   if (!cache.has(path)) {
     const pending = fetchJson<unknown>(path).then(convert);
     pending.catch(() => cache.delete(path));
     cache.set(path, pending);
+    if (isGame(path)) {
+      const games = [...cache.keys()].filter(isGame);
+      for (const old of games.slice(0, Math.max(0, games.length - GAMES_KEPT))) cache.delete(old);
+    }
   }
   return cache.get(path) as Promise<T>;
 }

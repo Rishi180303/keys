@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchJson, rowsFromColumns } from "./data";
+import { fetchJson, GAMES_KEPT, loadGame, loadMeta, rowsFromColumns } from "./data";
 
 const respond = (body: string, type: string, status = 200) =>
   vi.fn(async () => new Response(body, { status, headers: { "content-type": type } }));
@@ -28,5 +28,21 @@ describe("rowsFromColumns", () => {
   it("zips columns and rows into objects", () => {
     const rows = rowsFromColumns({ columns: ["game", "play", "id", "ex"], rows: [[1, 2, 3, null], [1, 4, 5, "out of bounds"]] });
     expect(rows).toEqual([{ game: 1, play: 2, id: 3, ex: null }, { game: 1, play: 4, id: 5, ex: "out of bounds" }]);
+  });
+});
+
+describe("load", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("keeps only the latest game files and never drops the small files", async () => {
+    const fetch = respond("{}", "application/json");
+    vi.stubGlobal("fetch", fetch);
+    await loadMeta();
+    for (let g = 1; g <= GAMES_KEPT + 2; g++) await loadGame(g);
+    const calls = fetch.mock.calls.length;
+    await loadGame(GAMES_KEPT + 2);
+    await loadMeta();
+    expect(fetch.mock.calls.length).toBe(calls);
+    await loadGame(1);
+    expect(fetch.mock.calls.length).toBe(calls + 1);
   });
 });

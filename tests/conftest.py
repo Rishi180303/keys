@@ -1,27 +1,11 @@
 import importlib
 import math
-import urllib.parse
 from pathlib import Path
 
 import polars as pl
 import pytest
 
 FRAMES_IN, FRAMES_OUT = 12, 6
-FIXTURES = Path(__file__).parent / "fixtures"
-# the players behind the recorded answers in tests/fixtures (asked on 2026-09-30, saved with indent 1)
-PEOPLE = [
-    {"id": 11, "name": "Jalen Ramsey", "born": "1994-10-24"},  # the label itself
-    {"id": 12, "name": "A.J. Terrell", "born": "1998-09-23"},  # the label is A. J. Terrell
-    {"id": 13, "name": "Pat Surtain II", "born": "2000-04-14"},  # an alias, and three images
-    {"id": 14, "name": "C.J. Mosley", "born": "1992-06-19"},  # a small public domain png
-    {"id": 15, "name": "Asante Samuel", "born": "1999-10-03"},  # the label is Asante Samuel Jr., no image
-    {"id": 16, "name": "Jalen Ramsey", "born": "1998-09-23"},  # the right name on the wrong birthday
-    {"id": 17, "name": "Pete Werner", "born": "1998-06-05"},  # no football player on Wikidata was born that day
-    {"id": 18, "name": "No Birthday", "born": None},
-    {"id": 19, "name": "Quandre Diggs", "born": "1993-01-22"},  # his only label on Wikidata is under mul
-    {"id": 20, "name": "Kyle Hamilton", "born": "2001-03-16"},  # Commons has not reviewed his picture's license
-]
-IMAGE = {".jpg": b"\xff\xd8 jpeg", ".png": b"\x89PNG png", ".webp": b"RIFF webp"}
 
 
 def reload_roots():
@@ -37,7 +21,7 @@ def roots(tmp_path, monkeypatch):
     """Point the data and model roots at a temp folder for one test, with no bucket variables set."""
     monkeypatch.setenv("KEYS_DATA", str(tmp_path / "data"))
     monkeypatch.setenv("KEYS_MODELS", str(tmp_path / "models"))
-    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN", "KEYS_SITE_BUCKET", "KEYS_PHOTOS_EXCLUDE"):
+    for name in ("KEYS_DATA_BUCKET", "KEYS_ARTIFACTS_BUCKET", "KEYS_RUN", "KEYS_SITE_BUCKET"):
         monkeypatch.delenv(name, raising=False)
     reload_roots()
     yield tmp_path
@@ -152,29 +136,6 @@ class FakeS3:
 @pytest.fixture
 def fake_s3():
     return FakeS3()
-
-
-@pytest.fixture
-def wikimedia(monkeypatch):
-    """The recorded Wikidata and Commons answers in place of the network, and no pauses.
-
-    Returns (calls, answers): every (url, form) asked, and a dict a test can fill to answer an address itself,
-    with bytes or with an exception to raise. A thumbnail address answers with a tiny image of its type."""
-    from keys import photos
-
-    calls = []
-    answers = {photos.SPARQL: (FIXTURES / "wikidata.json").read_bytes(), photos.COMMONS: (FIXTURES / "commons.json").read_bytes()}
-
-    def get(url, form=None):
-        calls.append((url, form))
-        answer = answers.get(url, IMAGE.get(Path(urllib.parse.urlparse(url).path).suffix.lower()))
-        if isinstance(answer, Exception):
-            raise answer
-        return answer
-
-    monkeypatch.setattr(photos, "get", get)
-    monkeypatch.setattr(photos, "PAUSE", 0)
-    return calls, answers
 
 
 @pytest.fixture

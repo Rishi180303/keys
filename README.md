@@ -1,43 +1,23 @@
 # keys
 
-I am building a machine learning project on NFL tracking data from the 2026 Big Data Bowl on Kaggle. I am a big football fan, so this is the kind of thing I would poke at anyway.
+![One pass replayed from the tracking data. The ball is in the air and the defender closes on the receiver.](media/replay.gif)
 
-Here is the idea. The moment a quarterback lets the ball go, the targeted receiver and the defenders closest to the play all start moving toward the spot where it will land. The NFL records every player ten times a second. This project trains a model to predict those paths from the throw until the ball arrives.
+I am a big football fan, so when the NFL put its tracking data on Kaggle for the 2026 Big Data Bowl I had to build something with it. This is that something.
 
-The model does three jobs. It sits behind an API that takes a play and returns predicted paths. It gives every defender a rating by comparing what the defender actually did with what the model expected. And it feeds a website where you can watch real plays next to the model's guesses. The website is live at https://d2i4e06jgm34jr.cloudfront.net.
+The NFL records every player ten times a second. The moment a quarterback lets the ball go, the receiver and the nearest defenders all break for the spot where it will land. I trained a model to predict those paths, from the throw until the ball arrives.
 
-The stack is Python, PyTorch and Terraform, and everything runs on AWS.
+Then I turned the model into a rating. For every pass, it guesses where a defender should end up. Closing over expected is how much closer he actually got. It only measures what happens after the throw, and it says nothing about whether the pass was caught. Every number has to pass a set of checks before it is published, so a good scheme cannot pass for a good player.
 
-## status
+The site is live at https://d2i4e06jgm34jr.cloudfront.net. It opens on a reel of the season's best plays, replayed from the real tracking data. There is a leaderboard you can filter any way you like, a page for every defender, and a what if tool that lets you move the landing spot and ask the model what it would expect instead.
 
-The model trains in AWS and answers requests through a small web API. Five folds run as one pipeline and the held out error averages 0.57 yards on the forty frame cut, against 1.61 for constant velocity. The pipeline rates every flagged coverage defender, checks the rating against the ways it could fool itself, and publishes the data for a website that is now live: a leaderboard, a play viewer with the model's expected paths next to the real ones, and a what if tool that moves the ball and asks the live model.
+## how it is built
 
-## api
+Python, polars and PyTorch for the model. The pipeline runs on AWS: Fargate jobs behind Step Functions, the API on Lambda, the site on CloudFront, all of it in Terraform. GitHub Actions tests, builds and deploys on every push to main. The site is React and TypeScript. The replays are drawn on a canvas straight from the data, so there are no video files anywhere, and the players move exactly as the tracking has them.
 
-The API takes one play and returns a predicted path for every player the play flags, one point per frame until the ball lands, each with a spread in yards.
+The held out error is 0.57 yards on plays of forty frames or fewer. Assuming everyone keeps running in a straight line gives 1.61.
 
-Send a POST to /predict with a JSON body of the form {"rows": [...]}. Each row is one player at one frame before the throw, with the same 23 columns as the Kaggle input files. The reply names the model and holds one entry per predicted player and frame: nfl_id, frame_id, x, y, sd_x and sd_y. A request the API cannot use gets a 400 and a short message saying what is wrong.
+## running it
 
-The easiest way to try it is the what if tool on the website.
+The tracking data is about 1.6 GB and is not in this repo. Download it from Kaggle and put the two folders in the project directory. Then `uv run pytest` runs the tests. For the website, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then `npm install` and `npm run dev` inside site.
 
-## rating
-
-Every flagged coverage defender gets a number called closing over expected. Knowing where and when the ball came down, the model predicts where a typical defender would be at the catch point from this player's spot at the throw. The rating is how much closer he actually got, measured in units of how sure the model was, compared with defenders on the same kind of throw, in the same role, at the same position, against the same route, and averaged over his plays. It is a movement stat. It says nothing about whether the pass was completed.
-
-The rating is computed inside the pipeline after the model is published, and it has to pass its own checks before anything is written for the site: no coverage scheme, route, air time, starting distance, role or position moves the average by more than a quarter of the spread between players, and a defender's number in half the season has to line up with his number in the other half. If a check fails the site keeps the last data that passed.
-
-The same step picks eight highlights for the site. Each one is a different defender's best rated play among those where he was the defender expected closest to the ball, the throw hung in the air for at least a second and a half, and he ended up closer to the ball than expected. Every position group gets at least two. The pipeline saves them with everything a replay needs.
-
-## site
-
-The website is a small React app on CloudFront. It opens on a reel of the season's highlights. Each play is replayed from the tracking data on a canvas, with a broadcast camera behind the offense, an overhead camera and a chase camera that rides along with the throw. The tracking data has no ball, so its flight is drawn from the passer to the landing spot. The leaderboard is computed in the browser from a table of every rated defender play, so any mix of position, coverage, route, role and team works without a server, and a teams tab does the same for whole defenses. Every defender has a page with his card and a reel of his plays, best first. A play page shows one pass with the model's expected path for one featured defender and a table of every flagged defender's expected and actual distances, and its what if tool lets you move the landing spot or change the air time and asks the live API what the model would expect instead.
-
-To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format, the replay engine and the rows the what if tool sends to the API.
-
-## players
-
-Every player shows a badge in his team's colors with his initials. There are no photos of players on the site. I have no right to use NFL headshots, and the free Wikimedia Commons pictures that an earlier version showed are gone too, so the site shows no faces.
-
-## data
-
-The tracking data comes from the NFL Big Data Bowl 2026 competition on Kaggle. It is about 1.6 GB of CSV files and it is not in this repo. Download it from Kaggle and put the two folders in the project directory.
+There are no faces on the site. Every player gets a badge in his team's colors with his initials, because I have no right to use NFL headshots.

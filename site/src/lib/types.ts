@@ -128,6 +128,3 @@ export type Highlight = {
   scene: Play;
 };
 
-/** A free licensed photo from photos.json, credited to its author; file sits under /data/photos/. */
-export type Photo = { file: string; artist: string; license: string; license_url: string | null; source: string };
-export type Photos = Record<string, Photo>;

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { label, outcome, pct, rankText, signed } from "../lib/format";
-import { loadGame, loadMeta, loadPhotos, loadPlays } from "../lib/data";
+import { loadGame, loadMeta, loadPlays } from "../lib/data";
 import { board, mainTeam } from "../lib/people";
 import { rated, ratePlayers } from "../lib/rating";
 import { teamName } from "../lib/teams";
-import type { Game, Meta, Photos, PlayRow } from "../lib/types";
+import type { Game, Meta, PlayRow } from "../lib/types";
 import Replay from "../replay/Replay";
 import { buildScene } from "../replay/scene";
 import { Avatar, Meter, ReplayWait, Stat, TierChip, useTitle } from "../ui";
@@ -14,7 +14,6 @@ export default function Player() {
   const id = Number(useParams().id);
   const [season, setSeason] = useState<{ rows: PlayRow[]; meta: Meta } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [photos, setPhotos] = useState<Photos | null>(null);
   const [at, setAt] = useState(0);
   // the reel starts at the top for each player; resetting during render means no render sees another player's index
   const [reelOf, setReelOf] = useState(id);
@@ -31,7 +30,6 @@ export default function Player() {
     Promise.all([loadPlays(), loadMeta()])
       .then(([rows, meta]) => setSeason({ rows, meta }))
       .catch((e: Error) => setError(e.message));
-    loadPhotos().then(setPhotos);
   }, []);
 
   // everyone gets a card, but only a listed defender gets a rank in his group
@@ -76,13 +74,12 @@ export default function Player() {
   if (!me) return <p className="page-msg">No rated defender has the id {id}.</p>;
   const { p, rank, total } = me;
   const team = mainTeam(p);
-  const photo = photos?.[String(p.id)];
 
   return (
     <div className="player">
       <section className="pcard" aria-label="season card">
         <div className="pcard-top">
-          <Avatar key={p.id} id={p.id} name={p.name} team={team} photos={photos} size={112} square />
+          <Avatar key={p.id} name={p.name} team={team} size={112} square />
           <div>
             <h1>{p.name}</h1>
             <p className="pmeta">
@@ -91,13 +88,6 @@ export default function Player() {
             <p className="prank">{rank ? rankText(rank, total, p.grp) : `Not listed, fewer than ${season.meta.min_plays} rated plays`}</p>
           </div>
         </div>
-        {photo && (
-          <p className="credit">
-            Photo: {photo.artist},{" "}
-            {photo.license_url ? <a href={photo.license_url}>{photo.license}</a> : photo.license},{" "}
-            <a href={photo.source}>Wikimedia Commons</a>
-          </p>
-        )}
         <div className="pnum">
           <b className={p.tier}>{signed(p.rating)}</b>
           <TierChip tier={p.tier} />

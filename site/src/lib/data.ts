@@ -1,4 +1,4 @@
-import type { Game, Highlight, Meta, Photos, PlayRow, PlaysFile } from "./types";
+import type { Game, Highlight, Meta, PlayRow, PlaysFile } from "./types";
 
 /** Fetch one data file. A missing file arrives as the app's own index.html with status 200 because of the
  * client side routing rule, so the content type is the real check, and a bad body is an error, never a page. */
@@ -40,5 +40,3 @@ export const loadMeta = () => load<Meta>("/data/meta.json");
 export const loadPlays = () => load<PlayRow[]>("/data/plays.json", (raw) => rowsFromColumns(raw as PlaysFile));
 export const loadGame = (game: number) => load<Game>(`/data/games/${game}.json`);
 export const loadHighlights = () => load<Highlight[]>("/data/highlights.json");
-/** Photos are a nicety: without photos.json every player gets his team badge. */
-export const loadPhotos = (): Promise<Photos> => load<Photos>("/data/photos.json").catch(() => ({}));

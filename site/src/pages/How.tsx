@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
-import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
+import { loadMeta } from "../lib/data";
 import { label } from "../lib/format";
-import type { Cell, Meta, Photos } from "../lib/types";
+import type { Cell, Meta } from "../lib/types";
 import { useTitle } from "../ui";
 
 const DIMS: Record<string, string> = {
@@ -21,51 +21,18 @@ const REASONS: Record<string, string> = {
 };
 const signed = (v: number | null, d = 3) => (v === null ? "" : (v < 0 ? "−" : "+") + Math.abs(v).toFixed(d));
 
-/** Every photo the site shows, with its author, license and file page, as CC BY and CC BY-SA ask. */
-function Credits({ onReady }: { onReady: () => void }) {
-  const [photos, setPhotos] = useState<Photos | null>(null);
-  const [names, setNames] = useState<Map<number, string> | null>(null);
-  useEffect(() => {
-    loadPhotos().then(setPhotos);
-    loadPlays()
-      .then((rows) => setNames(new Map(rows.map((r) => [r.id, r.name]))))
-      .catch(() => setNames(new Map()));
-  }, []);
-  const ready = Boolean(photos && names);
-  useEffect(() => {
-    if (ready) onReady();
-  }, [ready, onReady]);
-  if (!photos || !names) return <p className="quiet">Loading the credits</p>;
-  const list = Object.entries(photos)
-    .map(([id, p]) => ({ id, name: names.get(Number(id)) ?? `Player ${id}`, ...p }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  if (!list.length) return <p>No photos are published right now, so every player shows his team badge.</p>;
-  return (
-    <ul className="credits">
-      {list.map((c) => (
-        <li key={c.id}>
-          <b>{c.name}</b>: <a href={c.source}>photo</a> by {c.artist},{" "}
-          {c.license_url ? <a href={c.license_url}>{c.license}</a> : c.license}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export default function How() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [creditsReady, setCreditsReady] = useState(false);
   const { hash } = useLocation();
   useTitle("How it works");
   useEffect(() => {
     loadMeta().then(setMeta).catch((e: Error) => setError(e.message));
   }, []);
-  // the router does not scroll to a #part, the headings only exist once meta has arrived, and the page is only
-  // tall enough to put the photos heading at the top once the credits are in, so scroll again then
+  // the router does not scroll to a #part, and the headings only exist once meta has arrived
   useEffect(() => {
     if (meta && hash) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [meta, hash, creditsReady]);
+  }, [meta, hash]);
   if (error) return <p className="page-msg">This page did not load ({error}).</p>;
   if (!meta) return <p className="page-msg quiet">Loading</p>;
   const g = meta.gate;
@@ -201,13 +168,6 @@ export default function How() {
         throw to the landing spot, with an arc for height. The dashed line is where the model expected the featured
         defender to go, and the ring around its end is the model's spread.
       </p>
-      <h2 id="photos">Photo credits</h2>
-      <p>
-        Player photos come from Wikimedia Commons, matched to each defender on Wikidata by name and birth date, and only
-        under licenses that allow reuse with credit (CC BY, CC BY-SA, CC0 or public domain). A defender without one gets
-        a badge in his team's color. No photo here is an NFL headshot.
-      </p>
-      <Credits onReady={() => setCreditsReady(true)} />
     </article>
   );
 }

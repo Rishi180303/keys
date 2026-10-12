@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { loadMeta, loadPhotos, loadPlays } from "../lib/data";
+import { loadMeta, loadPlays } from "../lib/data";
 import { groupName, label, pct, signed } from "../lib/format";
 import { mainTeam } from "../lib/people";
 import { applyFilters, rated, ratePlayers, rateTeams, tierOf, type Filters } from "../lib/rating";
 import { badge, teamName } from "../lib/teams";
-import type { Meta, Photos, PlayRow } from "../lib/types";
+import type { Meta, PlayRow } from "../lib/types";
 import { Avatar, Meter, TierChip, useTitle } from "../ui";
 
 /** The tabs: one per position group, then every team's defenders together. */
@@ -15,7 +15,6 @@ const TAB_NAMES: Record<string, string> = { CB: "Corners", S: "Safeties", LB: "L
 export default function Leaderboard() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [rows, setRows] = useState<PlayRow[] | null>(null);
-  const [photos, setPhotos] = useState<Photos | null>(null);
   const [error, setError] = useState<string | null>(null);
   // the tab and the filters live in the address, so Back from a player returns to the same view and a view can be shared
   const [query, setQuery] = useSearchParams();
@@ -41,7 +40,6 @@ export default function Leaderboard() {
         setRows(rated(r));
       })
       .catch((e: Error) => setError(e.message));
-    loadPhotos().then(setPhotos);
   }, []);
 
   const options = useMemo(() => {
@@ -232,7 +230,7 @@ export default function Leaderboard() {
                     <td className="r">{i + 1}</td>
                     <td>
                       <span className="who">
-                        <Avatar id={p.id} name={p.name} team={mainTeam(p)} photos={photos} size={32} />
+                        <Avatar name={p.name} team={mainTeam(p)} size={32} />
                         <Link to={`/player/${p.id}`} onClick={(e) => e.stopPropagation()}>
                           <b>{p.name}</b>
                         </Link>

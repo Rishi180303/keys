@@ -34,9 +34,9 @@ The website is a small React app on CloudFront. It opens on a reel of the season
 
 To run it locally, put the site's address in site/.env.local as KEYS_DATA_ORIGIN, then npm install and npm run dev inside site. The tests cover the rating math, the filters, the file format, the replay engine and the rows the what if tool sends to the API.
 
-## photos
+## players
 
-Player photos come from Wikimedia Commons, because I have no right to use NFL headshots. A separate job looks up every listed defender on Wikidata. It only accepts a football player with the same name and the same birth date, since a name alone is not enough to be sure. It keeps a picture when Commons lists it under a Creative Commons attribution or share alike license, under CC0, or as public domain, and skips one whose license Commons has not finished checking. It also saves the credit, the license and a link to the file page, so the site can credit every photo. On the 2023 season that found a photo for 217 of the 320 listed defenders. Two more are left out by hand: one picture turned out to show a different player, and one has a child in the frame. I run it by hand after the rating.
+Every player shows a badge in his team's colors with his initials. There are no photos of players on the site. I have no right to use NFL headshots, and the free Wikimedia Commons pictures that an earlier version showed are gone too, so the site shows no faces.
 
 ## data
 

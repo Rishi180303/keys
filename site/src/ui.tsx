@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { Tier } from "./lib/rating";
 import { badge, initials } from "./lib/teams";
-import type { Photos } from "./lib/types";
 
 const TITLE = "keys, closing over expected";
 /** The browser tab's title for this page: the page's own name, or the site's when it has none. */
@@ -11,24 +10,12 @@ export function useTitle(title?: string | null) {
   }, [title]);
 }
 
-/** A player's free licensed photo, or a badge in his team's color with his initials when there is none or it fails. */
-export function Avatar({ id, name, team, photos, size = 36, square = false }: {
-  id: number;
-  name: string;
-  team: string;
-  photos: Photos | null;
-  size?: number;
-  square?: boolean;
-}) {
-  const [broken, setBroken] = useState(false);
-  const photo = photos?.[String(id)];
+/** A badge in the player's team color with his initials. The site shows no faces. */
+export function Avatar({ name, team, size = 36, square = false }: { name: string; team: string; size?: number; square?: boolean }) {
   const style = { width: size, height: size, fontSize: Math.round(size * 0.36) };
-  const cls = `avatar${square ? " square" : ""}`;
-  if (photo && !broken)
-    return <img className={cls} style={style} src={`/data/photos/${photo.file}`} alt="" loading="lazy" onError={() => setBroken(true)} />;
   const { bg, fg } = badge(team);
   return (
-    <span className={`${cls} badge`} style={{ ...style, background: bg, color: fg }} aria-hidden="true">
+    <span className={`avatar${square ? " square" : ""} badge`} style={{ ...style, background: bg, color: fg }} aria-hidden="true">
       {initials(name)}
     </span>
   );

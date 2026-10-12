@@ -1,15 +1,13 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { loadMeta, loadPhotos, loadPlays } from "./lib/data";
+import { loadMeta, loadPlays } from "./lib/data";
 import { listed, mainTeam, search } from "./lib/people";
 import type { PlayerRating } from "./lib/rating";
-import type { Photos } from "./lib/types";
 import { Avatar } from "./ui";
 
 /** Search over the listed defenders by name. The season's plays load the first time the box is used. */
 function Search({ onDone }: { onDone?: () => void }) {
   const [players, setPlayers] = useState<PlayerRating[] | null>(null);
-  const [photos, setPhotos] = useState<Photos | null>(null);
   const [failed, setFailed] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
@@ -27,7 +25,6 @@ function Search({ onDone }: { onDone?: () => void }) {
         started.current = false;
         setFailed(true);
       });
-    loadPhotos().then(setPhotos);
   };
   const hits = players ? search(players, q) : [];
   const shown = open && q.trim() !== "";
@@ -93,7 +90,7 @@ function Search({ onDone }: { onDone?: () => void }) {
               onClick={() => go(p)}
               onMouseEnter={() => setActive(i)}
             >
-              <Avatar id={p.id} name={p.name} team={mainTeam(p)} photos={photos} size={28} />
+              <Avatar name={p.name} team={mainTeam(p)} size={28} />
               <span className="hit-name">{p.name}</span>
               <span className="hit-meta">
                 {p.pos} {mainTeam(p)}
@@ -142,8 +139,7 @@ export default function App() {
       </main>
       <footer className="foot">
         <p>
-          NFL Big Data Bowl 2026 tracking data, 2023 season. Player photos from Wikimedia Commons,{" "}
-          <Link to="/how#photos">credited here</Link>. Code at{" "}
+          NFL Big Data Bowl 2026 tracking data, 2023 season. Code at{" "}
           <a href="https://github.com/Rishi180303/keys">github.com/Rishi180303/keys</a>.
         </p>
       </footer>

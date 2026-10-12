@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { groupName, signed } from "../lib/format";
-import { loadHighlights, loadMeta, loadPhotos, loadPlays } from "../lib/data";
+import { loadHighlights, loadMeta, loadPlays } from "../lib/data";
 import { board, mainTeam } from "../lib/people";
 import { rated, rateTeams, tierOf, type PlayerRating, type TeamRating } from "../lib/rating";
 import { badge, teamName } from "../lib/teams";
-import type { Highlight, Meta, Photos, PlayRow } from "../lib/types";
+import type { Highlight, Meta, PlayRow } from "../lib/types";
 import Replay from "../replay/Replay";
 import { buildScene } from "../replay/scene";
 import { Avatar, Meter, ReplayWait, useTitle } from "../ui";
 
 const GROUPS = ["CB", "S", "LB"];
 
-function Top({ grp, players, photos }: { grp: string; players: PlayerRating[]; photos: Photos | null }) {
+function Top({ grp, players }: { grp: string; players: PlayerRating[] }) {
   return (
     <div className="top">
       <h3>Top {groupName(grp)}</h3>
@@ -20,7 +20,7 @@ function Top({ grp, players, photos }: { grp: string; players: PlayerRating[]; p
         {players.slice(0, 5).map((p, i) => (
           <li key={p.id}>
             <span className="rank">{i + 1}</span>
-            <Avatar id={p.id} name={p.name} team={mainTeam(p)} photos={photos} />
+            <Avatar name={p.name} team={mainTeam(p)} />
             <Link to={`/player/${p.id}`} className="who">
               <b>{p.name}</b>
               <span>{mainTeam(p)}</span>
@@ -61,7 +61,6 @@ export default function Home() {
   const [reel, setReel] = useState<Highlight[] | null>(null);
   const [reelError, setReelError] = useState<string | null>(null);
   const [at, setAt] = useState(0);
-  const [photos, setPhotos] = useState<Photos | null>(null);
   const [season, setSeason] = useState<{ rows: PlayRow[]; meta: Meta } | null>(null);
   const [tries, setTries] = useState(0);
   const [seasonError, setSeasonError] = useState<string | null>(null);
@@ -74,9 +73,6 @@ export default function Home() {
       .then(setReel)
       .catch((e: Error) => setReelError(`The highlights did not load (${e.message}).`));
   }, [tries]);
-  useEffect(() => {
-    loadPhotos().then(setPhotos);
-  }, []);
   // the season's plays are the heavy file, so they wait until the reel has started
   useEffect(() => {
     if (!reel && !reelError) return;
@@ -143,7 +139,7 @@ export default function Home() {
 
       <section className="tops" aria-label="the best defenders at each position">
         {boards ? (
-          boards.map((b, i) => <Top key={GROUPS[i]} grp={GROUPS[i]} players={b} photos={photos} />)
+          boards.map((b, i) => <Top key={GROUPS[i]} grp={GROUPS[i]} players={b} />)
         ) : seasonError ? (
           <p className="season-error">
             The leaderboard did not load ({seasonError}).{" "}

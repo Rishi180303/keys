@@ -978,19 +978,133 @@ table.checks {
 
 /* how it works */
 .how {
-  max-width: 760px;
+  max-width: 960px;
   margin: 40px 0 0;
 }
-.how h2 {
-  /* clear the sticky nav when a link jumps to a heading */
-  scroll-margin-top: 76px;
-  font-size: 26px;
-  letter-spacing: 0.02em;
-  margin: 44px 0 12px;
+.how-head {
+  max-width: 720px;
+}
+.how .lead {
+  margin: 14px 0 0;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 .how p,
 .how li {
   color: #cbd5e1;
+}
+/* the three steps */
+.steps {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.steps li {
+  position: relative;
+  padding: 22px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.steps .step-n {
+  display: block;
+  font: 700 40px/1 var(--display);
+  color: var(--accent);
+  text-shadow: 0 0 18px var(--accent-soft);
+}
+.steps h2 {
+  margin: 10px 0 6px;
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+.steps p {
+  margin: 0;
+  font-size: 15px;
+}
+.how-stats {
+  margin-top: 36px;
+}
+/* the two cards */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+}
+.how-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.how-card h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.how-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.how-card li {
+  margin: 8px 0;
+  font-size: 15px;
+}
+/* the folded detail */
+.how-more {
+  /* clear the sticky nav when a link jumps here */
+  scroll-margin-top: 76px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.how-more:first-of-type {
+  margin-top: 36px;
+}
+.how-more summary {
+  cursor: pointer;
+  padding: 14px 18px;
+  font: 600 18px/1.2 var(--display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  list-style: none;
+}
+.how-more summary::-webkit-details-marker {
+  display: none;
+}
+.how-more summary::before {
+  content: "+";
+  display: inline-block;
+  width: 22px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.how-more[open] summary::before {
+  content: "−";
+}
+.how-more > :not(summary) {
+  margin-left: 18px;
+  margin-right: 18px;
+}
+.how-more > p:last-child,
+.how-more > ul:last-child,
+.how-more > .scroll:last-child {
+  margin-bottom: 16px;
+}
+.how-more p {
+  font-size: 15px;
+}
+.how-foot {
+  margin: 36px 0 0;
+  font-size: 14px;
+  color: var(--faint);
 }
 .how .checks td:nth-child(3),
 .how .checks td:nth-child(4) {
@@ -1003,6 +1117,13 @@ table.checks {
   .board-head h1,
   .how h1 {
     font-size: 38px;
+  }
+  .steps,
+  .how-grid {
+    grid-template-columns: 1fr;
+  }
+  .how-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

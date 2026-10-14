@@ -52,7 +52,7 @@ describe("drawFrame", () => {
 describe("clipping at the camera", () => {
   const vp = { w: 1280, h: 720 };
   const { project, depth } = perspective([26, 0, 5], [26, 20, 0], 700, vp);
-  const view: View = { flat: false, project, depth, unproject: null, uMin: -60, uMax: 100, downfield: null };
+  const view: View = { flat: false, mix: 1, project, depth, unproject: null, uMin: -60, uMax: 100, downfield: null };
   it("cuts a line that passes behind the camera instead of dropping it", () => {
     const seg = clipSegment(view, [0, -20], [0, 40])!;
     expect(seg[1]).toEqual([0, 40]);

@@ -167,6 +167,13 @@ function dot(ctx: Ctx, x: number, y: number, r: number, color: string, halo: boo
   ctx.fill();
 }
 
+/** Part way between two hex colors. */
+function mixHex(a: string, b: string, k: number) {
+  const c = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16);
+  const ch = (i: number) => Math.round(c(a, i) + (c(b, i) - c(a, i)) * k);
+  return `rgb(${ch(1)},${ch(3)},${ch(5)})`;
+}
+
 /** An ellipse on the ground around c with radii along l and u. */
 function groundEllipse(ctx: Ctx, view: View, c: Pt, rl: number, ru: number) {
   const p = view.project(c[0], c[1]);
@@ -200,7 +207,7 @@ export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp:
     const ys = turf.map((c) => c[1]);
     const top = Math.max(-vp.h, Math.min(...ys));
     const g = ctx.createLinearGradient(0, top, 0, Math.min(2 * vp.h, Math.max(top + 1, ...ys)));
-    g.addColorStop(0, view.flat ? theme.turfNear : theme.turfFar);
+    g.addColorStop(0, mixHex(theme.turfNear, theme.turfFar, view.mix));
     g.addColorStop(1, theme.turfNear);
     ctx.fillStyle = g;
     ctx.fill();
@@ -247,13 +254,16 @@ export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp:
   line(ctx, view, [0, u0], [0, u1]);
   line(ctx, view, [FIELD_W, u0], [FIELD_W, u1]);
 
-  // the fog toward the horizon
-  if (!view.flat) {
+  // the fog toward the horizon, fading out as a glide flattens the view
+  if (view.mix > 0) {
     const g = ctx.createLinearGradient(0, 0, 0, vp.h * 0.4);
     g.addColorStop(0, theme.bg);
     g.addColorStop(1, "rgba(5,7,10,0)");
+    ctx.save();
+    ctx.globalAlpha = view.mix;
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, vp.w, vp.h * 0.4);
+    ctx.restore();
   }
 
   // line of scrimmage and first down

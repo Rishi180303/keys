@@ -1,4 +1,4 @@
-import { airAt, along, ballAt, FIELD_W, ghostAt, type Pt, type Scene } from "./scene";
+import { airAt, along, ballAt, FIELD_W, ghostAt, type Actor, type Pt, type Scene } from "./scene";
 import { LEAD_FRAMES } from "./timeline";
 
 export type CameraName = "broadcast" | "overhead" | "chase";
@@ -9,6 +9,8 @@ export type Projected = [number, number, number];
 
 export type View = {
   flat: boolean;
+  /** 1 for a perspective view, 0 for a flat one, between the two part way through a glide */
+  mix: number;
   project: (l: number, u: number, z?: number) => Projected | null;
   /** distance in front of the camera (perspective views), so lines can be cut where they pass behind it */
   depth: ((l: number, u: number, z?: number) => number) | null;
@@ -62,8 +64,9 @@ function boxOf(pts: Pt[], pad: number, minL: number, minU: number): Box {
     u0 = Math.min(u0, u);
     u1 = Math.max(u1, u);
   }
+  // the padded span never goes under min
   const grow = (a: number, b: number, min: number) => {
-    const extra = Math.max(0, min - (b - a - 2 * pad)) / 2;
+    const extra = Math.max(0, min - (b - a + 2 * pad)) / 2;
     return [a - pad - extra, b + pad + extra];
   };
   [l0, l1] = grow(l0, l1, minL);
@@ -140,7 +143,7 @@ function broadcast(scene: Scene, frame: number, vp: Viewport): View {
   });
   // a slow push in while the ball is in the air
   const pos = eye(setup.at, pitch, setup.d * (1 - 0.03 * ease(airAt(scene, frame))));
-  return { flat: false, ...perspective(pos, setup.at, focal, vp), unproject: null, uMin: pos[1] - 60, uMax: setup.box.u1 + 45, downfield: null };
+  return { flat: false, mix: 1, ...perspective(pos, setup.at, focal, vp), unproject: null, uMin: pos[1] - 60, uMax: setup.box.u1 + 45, downfield: null };
 }
 
 function chase(scene: Scene, frame: number, vp: Viewport): View {
@@ -170,35 +173,40 @@ function chase(scene: Scene, frame: number, vp: Viewport): View {
   const e = ease(airAt(scene, frame));
   const mix = (a: V3, b: V3): V3 => [lerp(a[0] + shift[0] * (1 - e), b[0], e), lerp(a[1] + shift[1] * (1 - e), b[1], e), lerp(a[2], b[2], e)];
   const pos = mix(poses.from, poses.to);
-  return { flat: false, ...perspective(pos, mix(poses.start, poses.end), focal, vp), unproject: null, uMin: pos[1] - 60, uMax: pos[1] + 120, downfield: null };
+  return { flat: false, mix: 1, ...perspective(pos, mix(poses.start, poses.end), focal, vp), unproject: null, uMin: pos[1] - 60, uMax: pos[1] + 120, downfield: null };
+}
+
+/** The points the overhead keeps in frame at a frame: everyone before the throw, and then, while the ball flies, the
+ * passer and the help defenders drift toward the landing spot and vanish into it, so the frame closes in on the
+ * target, the featured defender, his expected spot and the ball without ever jumping. */
+function followPoints(scene: Scene, frame: number): Pt[] {
+  const f = Math.min(frame, scene.frames - 1);
+  const w = ease(airAt(scene, f));
+  const fade = (p: Pt): Pt => [lerp(p[0], scene.land[0], w), lerp(p[1], scene.land[1], w)];
+  const at = (a: Actor) => along(a.path, f);
+  const pts: Pt[] = [scene.land, fade(at(scene.passer))];
+  if (scene.target) pts.push(at(scene.target));
+  for (const d of scene.defenders) pts.push(d === scene.featured ? at(d) : fade(at(d)));
+  if (scene.featured) pts.push(ghostAt(scene.featured, scene, scene.frames - 1) ?? scene.land);
+  return pts;
 }
 
 function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: Pt | null): View {
   const right = vp.w >= vp.h;
   // the framing box (padded, with a floor on its size) sets the zoom; the bare extent of the same points is what
   // must stay in frame when the window slides
-  const full = cached(scene, "ofull", () => boxOf(keyPoints(scene), 5, 20, 25));
-  const bare = cached(scene, "obare", () => boxOf(keyPoints(scene), 0, 0, 0));
-  let box = full;
-  let keep = bare;
+  let box: Box;
+  let keep: Box;
   if (whatIf) {
     // the whole width of the field, and wherever the what if spot has been put, with room around it
+    const full = cached(scene, "ofull", () => boxOf(keyPoints(scene), 5, 20, 25));
     box = { l0: -2, l1: 55.3, u0: Math.min(full.u0, whatIf[1] - 12), u1: Math.max(full.u1, scene.land[1] + 15, whatIf[1] + 15) };
     keep = box;
   } else {
-    const s = ease(airAt(scene, frame));
-    if (s > 0) {
-      const ends = cached(scene, "oends", () => {
-        const pts = [scene.land, ...(scene.target ? [scene.target.path[scene.frames - 1]] : [])];
-        if (scene.featured) pts.push(scene.featured.path[scene.frames - 1], ghostAt(scene.featured, scene, scene.frames - 1) ?? scene.land);
-        return pts;
-      });
-      const air = cached(scene, "oair", () => boxOf(ends, 6, 18, 22));
-      const airBare = cached(scene, "oairbare", () => boxOf(ends, 0, 0, 0));
-      const mix = (a: Box, b: Box): Box => ({ l0: lerp(a.l0, b.l0, s), l1: lerp(a.l1, b.l1, s), u0: lerp(a.u0, b.u0, s), u1: lerp(a.u1, b.u1, s) });
-      box = mix(full, air);
-      keep = mix(bare, airBare);
-    }
+    // a follow camera: tight on the action, closing in on the catch as the ball flies
+    const pts = followPoints(scene, frame);
+    box = boxOf(pts, 4, 18, 24);
+    keep = boxOf(pts, 0, 0, 0);
   }
   const m = 0.06;
   const [spanX, spanY] = right ? [box.u1 - box.u0, box.l1 - box.l0] : [box.l1 - box.l0, box.u1 - box.u0];
@@ -227,7 +235,7 @@ function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: Pt | null):
       : [vp.w / 2 + (l - lc) * sc, vp.h / 2 - (u - uc) * sc - z * sc * 0.35, sc * (1 + z * 0.025)];
   const unproject = (x: number, y: number): Pt => (right ? [lc + (y - vp.h / 2) / sc, uc + (x - vp.w / 2) / sc] : [lc + (x - vp.w / 2) / sc, uc - (y - vp.h / 2) / sc]);
   const half = (right ? vp.w : vp.h) / 2 / sc;
-  return { flat: true, project, depth: null, unproject, uMin: uc - half - 1, uMax: uc + half + 1, downfield: right ? "right" : "up" };
+  return { flat: true, mix: 0, project, depth: null, unproject, uMin: uc - half - 1, uMax: uc + half + 1, downfield: right ? "right" : "up" };
 }
 
 /** The view a camera has of a scene at a frame in a viewport. A what if spot holds the overhead framing still, wide,
@@ -245,6 +253,7 @@ export function blend(a: View, b: View, k: number): View {
   if (k >= 1) return b;
   return {
     flat: k < 0.5 ? a.flat : b.flat,
+    mix: lerp(a.mix, b.mix, k),
     project: (l, u, z = 0) => {
       const p = a.project(l, u, z);
       const q = b.project(l, u, z);

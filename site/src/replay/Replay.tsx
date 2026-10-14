@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { blend, camera as viewOf, CAMERAS, defaultCamera, ease, screenNudge, type CameraName, type Viewport } from "./cameras";
+import { blend, camera as viewOf, CAMERAS, defaultCamera, screenNudge, type CameraName, type Viewport } from "./cameras";
 import { caption } from "./captions";
 import { drawFrame, NIGHT } from "./draw";
 import type { Pt, Scene } from "./scene";
@@ -22,8 +22,9 @@ type Props = {
 
 const STORE = "keys.camera";
 const LABELS: Record<CameraName, string> = { broadcast: "Broadcast", overhead: "Overhead", chase: "Chase" };
-/** how long a switch between cameras glides, in milliseconds */
+/** how long a switch between cameras glides, in milliseconds; it sets off at once and settles gently */
 const GLIDE = 600;
+const easeOut = (k: number) => 1 - (1 - k) ** 3;
 
 function readPick(): CameraName | null {
   try {
@@ -167,7 +168,7 @@ export default function Replay({ scene, camera: forced = null, autoplay = true, 
   const spot = whatIf?.land ?? null;
   const target = ready ? viewOf(cam, scene, frame, size, cam === "overhead" ? spot : null) : null;
   const k = glide ? Math.min(1, (performance.now() - glide.at) / GLIDE) : 1;
-  const view = target && glide && k < 1 ? blend(viewOf(glide.from, scene, frame, size, glide.from === "overhead" ? spot : null), target, ease(k)) : target;
+  const view = target && glide && k < 1 ? blend(viewOf(glide.from, scene, frame, size, glide.from === "overhead" ? spot : null), target, easeOut(k)) : target;
 
   // draw
   useEffect(() => {

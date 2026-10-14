@@ -1,4 +1,4 @@
-import { airAt, along, ballAt, ghostAt, type Pt, type Scene } from "./scene";
+import { airAt, along, ballAt, FIELD_W, ghostAt, type Pt, type Scene } from "./scene";
 import { LEAD_FRAMES } from "./timeline";
 
 export type CameraName = "broadcast" | "overhead" | "chase";
@@ -194,8 +194,19 @@ function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: Pt | null):
   const m = 0.06;
   const [spanX, spanY] = right ? [box.u1 - box.u0, box.l1 - box.l0] : [box.l1 - box.l0, box.u1 - box.u0];
   const sc = Math.min((vp.w * (1 - 2 * m)) / spanX, (vp.h * (1 - 2 * m)) / spanY);
-  const lc = (box.l0 + box.l1) / 2;
-  const uc = (box.u0 + box.u1) / 2;
+  // the window is usually wider than the box; slide it to stay on the field (never past an end line or a sideline)
+  // as long as the whole box still fits, so a goal line play does not show the void past the end zone
+  const left = scene.play.dir === "left";
+  const uOf = (x: number) => (left ? scene.play.yl - x : x - scene.play.yl);
+  const fit1 = (c: number, b0: number, b1: number, f0: number, f1: number, half: number) => {
+    const lo = Math.max(f0 + half, b1 - half);
+    const hi = Math.min(f1 - half, b0 + half);
+    return lo <= hi ? Math.min(hi, Math.max(lo, c)) : c;
+  };
+  const halfU = (right ? vp.w : vp.h) / 2 / sc;
+  const halfL = (right ? vp.h : vp.w) / 2 / sc;
+  const lc = fit1((box.l0 + box.l1) / 2, box.l0, box.l1, 0, FIELD_W, halfL);
+  const uc = fit1((box.u0 + box.u1) / 2, box.u0, box.u1, Math.min(uOf(0), uOf(120)), Math.max(uOf(0), uOf(120)), halfU);
   const project = (l: number, u: number, z = 0): Projected =>
     right
       ? [vp.w / 2 + (u - uc) * sc, vp.h / 2 + (l - lc) * sc - z * sc * 0.35, sc * (1 + z * 0.025)]

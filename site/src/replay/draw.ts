@@ -185,8 +185,8 @@ export function drawFrame(ctx: Ctx, scene: Scene, view: View, frame: number, vp:
   ctx.fillStyle = theme.bg;
   ctx.fillRect(0, 0, vp.w, vp.h);
 
-  // the ground around the field, as far as a perspective camera sees, so the end lines are not the edge of the world
-  if (!view.flat && fillGround(ctx, view, [[-30, view.uMin], [FIELD_W + 30, view.uMin], [FIELD_W + 30, view.uMax], [-30, view.uMax]])) {
+  // the ground around the field, as far as the camera sees, so the end lines are never the edge of the world
+  if (fillGround(ctx, view, [[-30, view.uMin], [FIELD_W + 30, view.uMin], [FIELD_W + 30, view.uMax], [-30, view.uMax]])) {
     ctx.fillStyle = theme.apron;
     ctx.fill();
   }

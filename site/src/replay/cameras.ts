@@ -175,38 +175,52 @@ function chase(scene: Scene, frame: number, vp: Viewport): View {
 
 function overhead(scene: Scene, frame: number, vp: Viewport, whatIf: Pt | null): View {
   const right = vp.w >= vp.h;
+  // the framing box (padded, with a floor on its size) sets the zoom; the bare extent of the same points is what
+  // must stay in frame when the window slides
   const full = cached(scene, "ofull", () => boxOf(keyPoints(scene), 5, 20, 25));
+  const bare = cached(scene, "obare", () => boxOf(keyPoints(scene), 0, 0, 0));
   let box = full;
+  let keep = bare;
   if (whatIf) {
     // the whole width of the field, and wherever the what if spot has been put, with room around it
     box = { l0: -2, l1: 55.3, u0: Math.min(full.u0, whatIf[1] - 12), u1: Math.max(full.u1, scene.land[1] + 15, whatIf[1] + 15) };
+    keep = box;
   } else {
     const s = ease(airAt(scene, frame));
     if (s > 0) {
-      const air = cached(scene, "oair", () => {
-        const ends = [scene.land, ...(scene.target ? [scene.target.path[scene.frames - 1]] : [])];
-        if (scene.featured) ends.push(scene.featured.path[scene.frames - 1], ghostAt(scene.featured, scene, scene.frames - 1) ?? scene.land);
-        return boxOf(ends, 6, 18, 22);
+      const ends = cached(scene, "oends", () => {
+        const pts = [scene.land, ...(scene.target ? [scene.target.path[scene.frames - 1]] : [])];
+        if (scene.featured) pts.push(scene.featured.path[scene.frames - 1], ghostAt(scene.featured, scene, scene.frames - 1) ?? scene.land);
+        return pts;
       });
-      box = { l0: lerp(full.l0, air.l0, s), l1: lerp(full.l1, air.l1, s), u0: lerp(full.u0, air.u0, s), u1: lerp(full.u1, air.u1, s) };
+      const air = cached(scene, "oair", () => boxOf(ends, 6, 18, 22));
+      const airBare = cached(scene, "oairbare", () => boxOf(ends, 0, 0, 0));
+      const mix = (a: Box, b: Box): Box => ({ l0: lerp(a.l0, b.l0, s), l1: lerp(a.l1, b.l1, s), u0: lerp(a.u0, b.u0, s), u1: lerp(a.u1, b.u1, s) });
+      box = mix(full, air);
+      keep = mix(bare, airBare);
     }
   }
   const m = 0.06;
   const [spanX, spanY] = right ? [box.u1 - box.u0, box.l1 - box.l0] : [box.l1 - box.l0, box.u1 - box.u0];
   const sc = Math.min((vp.w * (1 - 2 * m)) / spanX, (vp.h * (1 - 2 * m)) / spanY);
-  // the window is usually wider than the box; slide it to stay on the field (never past an end line or a sideline)
-  // as long as the whole box still fits, so a goal line play does not show the void past the end zone
+  // the window is usually wider than the box; slide it to stay on the field, so a goal line play does not show the
+  // void past the end zone. Every point it must show keeps the same margin from the window edge; when a point hugs
+  // the end line the window may run past it by that margin, and a point beyond the field leaves it centered as before
   const left = scene.play.dir === "left";
   const uOf = (x: number) => (left ? scene.play.yl - x : x - scene.play.yl);
-  const fit1 = (c: number, b0: number, b1: number, f0: number, f1: number, half: number) => {
-    const lo = Math.max(f0 + half, b1 - half);
-    const hi = Math.min(f1 - half, b0 + half);
-    return lo <= hi ? Math.min(hi, Math.max(lo, c)) : c;
+  const fit1 = (c: number, k0: number, k1: number, f0: number, f1: number, half: number) => {
+    const edge = 2 * m * half;
+    for (const slack of [0, edge]) {
+      const lo = Math.max(f0 - slack + half, k1 + edge - half);
+      const hi = Math.min(f1 + slack - half, k0 - edge + half);
+      if (lo <= hi) return Math.min(hi, Math.max(lo, c));
+    }
+    return c;
   };
   const halfU = (right ? vp.w : vp.h) / 2 / sc;
   const halfL = (right ? vp.h : vp.w) / 2 / sc;
-  const lc = fit1((box.l0 + box.l1) / 2, box.l0, box.l1, 0, FIELD_W, halfL);
-  const uc = fit1((box.u0 + box.u1) / 2, box.u0, box.u1, Math.min(uOf(0), uOf(120)), Math.max(uOf(0), uOf(120)), halfU);
+  const lc = fit1((box.l0 + box.l1) / 2, keep.l0, keep.l1, 0, FIELD_W, halfL);
+  const uc = fit1((box.u0 + box.u1) / 2, keep.u0, keep.u1, Math.min(uOf(0), uOf(120)), Math.max(uOf(0), uOf(120)), halfU);
   const project = (l: number, u: number, z = 0): Projected =>
     right
       ? [vp.w / 2 + (u - uc) * sc, vp.h / 2 + (l - lc) * sc - z * sc * 0.35, sc * (1 + z * 0.025)]

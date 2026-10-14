@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { blend, camera as viewOf, CAMERAS, defaultCamera, screenNudge, type CameraName, type Viewport } from "./cameras";
 import { caption } from "./captions";
 import { drawFrame, NIGHT } from "./draw";
@@ -170,8 +170,9 @@ export default function Replay({ scene, camera: forced = null, autoplay = true, 
   const k = glide ? Math.min(1, (performance.now() - glide.at) / GLIDE) : 1;
   const view = target && glide && k < 1 ? blend(viewOf(glide.from, scene, frame, size, glide.from === "overhead" ? spot : null), target, easeOut(k)) : target;
 
-  // draw
-  useEffect(() => {
+  // draw, before the browser paints this frame: a passive effect would run after the paint and land the picture one
+  // refresh late, or past the next one, which shows as judder whenever the whole field moves
+  useLayoutEffect(() => {
     const el = canvas.current;
     if (!el || !view) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);

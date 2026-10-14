@@ -3,12 +3,12 @@ import { Link } from "react-router";
 import { groupName, signed } from "../lib/format";
 import { loadHighlights, loadMeta, loadPlays } from "../lib/data";
 import { board, mainTeam } from "../lib/people";
-import { rated, rateTeams, tierOf, type PlayerRating, type TeamRating } from "../lib/rating";
-import { badge, teamName } from "../lib/teams";
+import type { PlayerRating } from "../lib/rating";
+import { teamName } from "../lib/teams";
 import type { Highlight, Meta, PlayRow } from "../lib/types";
 import Replay from "../replay/Replay";
 import { buildScene } from "../replay/scene";
-import { Avatar, Meter, ReplayWait, useTitle } from "../ui";
+import { Avatar, ReplayWait, useTitle } from "../ui";
 
 const GROUPS = ["CB", "S", "LB"];
 
@@ -33,29 +33,6 @@ function Top({ grp, players }: { grp: string; players: PlayerRating[] }) {
   );
 }
 
-function Defenses({ title, teams }: { title: string; teams: TeamRating[] }) {
-  return (
-    <div className="top">
-      <h3>{title}</h3>
-      <ol>
-        {teams.map((t) => {
-          const tier = tierOf(t.mean, t.se);
-          return (
-            <li key={t.team} className="team-row">
-              <span className="swatch" style={{ background: badge(t.team).bg }} aria-hidden="true" />
-              <span className="who">
-                <b>{teamName(t.team)}</b>
-                <span>{tier === "average" ? "average" : `${tier} average`}</span>
-              </span>
-              <Meter rating={t.mean} se={t.se} />
-              <span className={`num ${tier}`}>{signed(t.mean)}</span>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
-  );
-}
 
 export default function Home() {
   const [reel, setReel] = useState<Highlight[] | null>(null);
@@ -87,7 +64,6 @@ export default function Home() {
   const h = reel && reel.length ? reel[at % reel.length] : null;
   const scene = useMemo(() => (h ? buildScene(h.scene, h.id) : null), [h]);
   const boards = useMemo(() => (season ? GROUPS.map((g) => board(season.rows, season.meta, g)) : null), [season]);
-  const teams = useMemo(() => (season ? rateTeams(rated(season.rows), season.meta.min_plays) : null), [season]);
   const step = (d: number) => reel && setAt((i) => (i + d + reel.length) % reel.length);
 
   return (
@@ -131,9 +107,7 @@ export default function Home() {
       <section className="intro">
         <h1>Closing over expected</h1>
         <p>
-          The moment a pass is thrown, a model trained on NFL tracking data predicts where a typical defender would end
-          up when the ball arrives. The rating is how much closer to the catch point a defender actually got, compared
-          with defenders in the same situation. <Link to="/how">How it works</Link>
+          How much closer a defender got to the catch than the model expected. <Link to="/how">How it works</Link>
         </p>
       </section>
 
@@ -161,13 +135,6 @@ export default function Home() {
         <p className="more">
           <Link to="/leaderboard">See every defender on the leaderboard</Link>
         </p>
-      )}
-
-      {teams && (
-        <section className="tops two" aria-label="defenses">
-          <Defenses title="Defenses that close best" teams={teams.slice(0, 5)} />
-          <Defenses title="Defenses that close worst" teams={teams.slice(-5).reverse()} />
-        </section>
       )}
     </div>
   );

@@ -10,7 +10,7 @@ The NFL records where every player is ten times a second. When a quarterback thr
 
 That model is a yardstick. For every pass, it says where a typical defender would end up from this defender's starting spot. Closing over expected is how much closer he actually got, measured in units of how sure the model was, compared with defenders in the same situation. Average that over a season and you have a number for pursuit after the throw that does not depend on the scheme, the route, or how far away the defender started.
 
-It is deliberately narrow. The model is told where the ball lands, so it cannot reward a defender for reading the play early, and it does not know whether the pass was caught. The leaderboard shows completion rate and EPA next to the rating on purpose, so you can see that it predicts neither.
+It is deliberately narrow. The model is told where the ball lands, so it cannot reward a defender for reading the play early, and it does not know whether the pass was caught. Every player's page shows completion rate and EPA next to the rating on purpose, so you can see that it predicts neither.
 
 ## what you can do on the site
 

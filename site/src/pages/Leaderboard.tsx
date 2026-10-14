@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { loadMeta, loadPlays } from "../lib/data";
-import { groupName, label, pct, signed } from "../lib/format";
+import { groupName, label, signed } from "../lib/format";
 import { mainTeam } from "../lib/people";
 import { applyFilters, rated, ratePlayers, rateTeams, tierOf, type Filters } from "../lib/rating";
 import { badge, teamName } from "../lib/teams";
 import type { Meta, PlayRow } from "../lib/types";
-import { Avatar, Meter, TierChip, useTitle } from "../ui";
+import { Avatar, Meter, useTitle } from "../ui";
 
 /** The tabs: one per position group, then every team's defenders together. */
 const GROUPS = ["CB", "S", "LB", "teams"] as const;
@@ -68,7 +68,6 @@ export default function Leaderboard() {
     if (next.minPlays !== meta.min_plays) q.min = String(next.minPlays);
     setQuery(q, { replace: true });
   };
-  const k = meta.shrink[filters.grp]?.k;
   // the arrow keys move between tabs, as a tab list is expected to work; only the chosen tab sits in the tab order
   const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
     const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
@@ -84,9 +83,7 @@ export default function Leaderboard() {
       <header className="board-head">
         <h1>Leaderboard</h1>
         <p>
-          How much closer to the catch point each defender got than the model expected, in the model's own units,
-          averaged over his rated plays. It measures pursuit after the throw, not whether the pass was caught.{" "}
-          <Link to="/how">How it is computed and checked</Link>
+          How much closer each defender got to the catch than the model expected. <Link to="/how">How it works</Link>
         </p>
       </header>
       <div className="tabs" role="tablist" aria-label="position group" onKeyDown={onTabKey}>
@@ -134,7 +131,7 @@ export default function Leaderboard() {
           Role
           <select value={filters.role} onChange={(e) => set({ role: e.target.value })}>
             <option value="any">any</option>
-            <option value="primary">primary, closest expected to the ball</option>
+            <option value="primary">primary</option>
             <option value="help">help</option>
           </select>
         </label>
@@ -169,7 +166,6 @@ export default function Leaderboard() {
                   <th>Team</th>
                   <th className="n">Defender plays</th>
                   <th>Rating</th>
-                  <th>Tier</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,9 +187,6 @@ export default function Leaderboard() {
                           <Meter rating={t.mean} se={t.se} />
                         </span>
                       </td>
-                      <td>
-                        <TierChip tier={tier} />
-                      </td>
                     </tr>
                   );
                 })}
@@ -201,11 +194,8 @@ export default function Leaderboard() {
             </table>
           </div>
           <p className="caption">
-            {teams.length} teams with at least {filters.minPlays} defender plays. A team's number is the plain mean of the
-            per play values of its flagged defenders, every position together, on the plays the filters keep, with no
-            shrinkage. The bar is that mean plus or minus two standard errors on a scale from minus one to plus one;
-            above and below average mean that interval clears zero. A team's scheme and its players cannot be told apart
-            in one season, so this is both.
+            {teams.length} teams with at least {filters.minPlays} defender plays, every position together. The bar is
+            the mean plus or minus two standard errors.
           </p>
         </>
       ) : (
@@ -218,10 +208,6 @@ export default function Leaderboard() {
                   <th>Player</th>
                   <th className="n">Plays</th>
                   <th>Rating</th>
-                  <th>Tier</th>
-                  <th className="n">Yards closer</th>
-                  <th className="n">Completion rate</th>
-                  <th className="n">EPA per play</th>
                 </tr>
               </thead>
               <tbody>
@@ -246,23 +232,14 @@ export default function Leaderboard() {
                         <Meter rating={p.rating} se={p.se} />
                       </span>
                     </td>
-                    <td>
-                      <TierChip tier={p.tier} />
-                    </td>
-                    <td className="n">{signed(p.yards)}</td>
-                    <td className="n">{pct(p.comp)}</td>
-                    <td className="n">{p.epa === null ? "" : signed(p.epa)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <p className="caption">
-            {players.length} {groupName(filters.grp)} with at least {filters.minPlays} rated plays. The rating is the mean
-            of the per play values, shrunk toward zero with k of {k === undefined ? "?" : k.toFixed(0)} plays for this
-            position. The bar is the rating plus or minus two standard errors on a scale from minus one to plus one;
-            above and below average mean that interval clears zero. Completion rate and EPA are what happened on the
-            same plays; the rating does not predict either.
+            {players.length} {groupName(filters.grp)} with at least {filters.minPlays} rated plays. The bar is the rating
+            plus or minus two standard errors.
           </p>
         </>
       )}

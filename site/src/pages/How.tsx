@@ -100,7 +100,7 @@ export default function How() {
           <h2>What it is not</h2>
           <ul>
             <li>Not a coverage grade. The model already knows where the ball lands, so reading the play early earns no credit here.</li>
-            <li>Not an outcome stat. It does not predict completions or EPA. The leaderboard shows those next to it so you can see that for yourself.</li>
+            <li>Not an outcome stat. It does not predict completions or EPA. Every player's page shows those next to his rating so you can see that for yourself.</li>
             <li>Not free of team. One season cannot tell a scheme apart from its players.</li>
             <li>Not exact units. The model's spread runs about fifteen percent too narrow, so the scale is consistent but not calibrated.</li>
           </ul>

@@ -491,10 +491,6 @@ p.hits.none {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 36px;
 }
-.tops.two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 56px;
-}
 .top h3 {
   font-size: 21px;
   letter-spacing: 0.05em;
@@ -513,9 +509,6 @@ p.hits.none {
   gap: 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--line);
-}
-.top li.team-row {
-  grid-template-columns: 12px minmax(0, 1fr) 90px auto;
 }
 .top .rank {
   font: 700 16px var(--display);
@@ -563,9 +556,6 @@ p.hits.none {
   color: var(--below);
   text-shadow: none;
 }
-.top .team-row .meter {
-  width: 90px;
-}
 .more {
   margin: 18px 0 0;
   font-weight: 600;
@@ -573,10 +563,6 @@ p.hits.none {
 }
 @media (max-width: 900px) {
   .tops,
-  .tops.two {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-  }
   .intro h1 {
     font-size: 40px;
   }
@@ -1117,6 +1103,18 @@ table.checks {
   .board-head h1,
   .how h1 {
     font-size: 38px;
+  }
+  /* the table fits a phone: rank, name, plays and the number; the bar and the position come back on wider screens */
+  .board td,
+  .board th {
+    padding: 10px 8px;
+  }
+  .board td:nth-child(2) {
+    white-space: normal;
+  }
+  .board .meta,
+  .board .meter {
+    display: none;
   }
   .steps,
   .how-grid {

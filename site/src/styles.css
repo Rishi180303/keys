@@ -327,16 +327,16 @@ p.hits.none {
   position: relative;
   display: inline-block;
   width: 120px;
-  height: 6px;
+  height: 4px;
   flex: none;
-  border-radius: 3px;
-  background: rgba(148, 163, 184, 0.14);
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.12);
 }
 .meter .zero {
   position: absolute;
   left: 50%;
-  top: -3px;
-  bottom: -3px;
+  top: -4px;
+  bottom: -4px;
   width: 1px;
   background: var(--line-strong);
 }
@@ -344,36 +344,18 @@ p.hits.none {
   position: absolute;
   top: 0;
   bottom: 0;
-  border-radius: 3px;
-  background: rgba(56, 189, 248, 0.35);
+  border-radius: 2px;
+  background: rgba(56, 189, 248, 0.28);
 }
 .meter .point {
   position: absolute;
   top: -3px;
-  width: 3px;
-  height: 12px;
-  margin-left: -1px;
-  border-radius: 2px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-}
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-}
-.stat b {
-  font: 700 26px/1.1 var(--display);
-  color: #fff;
-  font-variant-numeric: tabular-nums;
-}
-.stat span {
-  font: 600 12px/1.2 var(--display);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
+  box-shadow: 0 0 10px var(--accent);
 }
 .swatch {
   display: inline-block;
@@ -570,82 +552,88 @@ p.hits.none {
 
 /* leaderboard */
 .board-head {
-  margin: 40px 0 24px;
+  margin: 40px 0 26px;
   max-width: 760px;
 }
 .board-head h1,
 .how h1 {
-  font-size: 48px;
+  font-size: 44px;
 }
 .board-head p {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
 }
+/* one segmented control for the position groups */
 .tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  max-width: 100%;
+  overflow-x: auto;
 }
 .tabs button {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  flex: none;
+  background: none;
+  border: 0;
+  border-radius: 9px;
   padding: 8px 16px;
-  font: 600 16px/1 var(--display);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 17px/1 var(--display);
+  letter-spacing: 0.04em;
   color: var(--muted);
   cursor: pointer;
 }
+.tabs button:hover {
+  color: var(--text);
+}
 .tabs button[aria-selected="true"] {
   background: #fff;
-  border-color: #fff;
   color: var(--bg);
 }
+/* the filters: a quiet row of choices, no labels, the first option of each says what it is */
 .filters {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 14px 18px;
-  margin: 18px 0 22px;
-}
-.filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font: 600 12px/1 var(--display);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.filters label:last-child {
-  flex-direction: row;
   align-items: center;
   gap: 8px;
+  margin: 16px 0 28px;
 }
 .filters select,
 .filters input {
-  background: var(--surface);
+  background: transparent;
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  padding: 7px 10px;
-  font: 400 14px var(--body);
-  letter-spacing: 0;
-  text-transform: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: 500 14px var(--body);
   color: var(--text);
-  max-width: 260px;
+  max-width: 240px;
+}
+.filters select:hover,
+.filters input:hover {
+  border-color: var(--muted);
+}
+.filters .min {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
 }
 .filters input {
-  width: 72px;
+  width: 64px;
+  padding: 7px 10px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 table.board,
 table.dtable,
 table.checks {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 15px;
 }
-.board th,
 .dtable th,
 .checks th {
   font: 600 12px/1.2 var(--display);
@@ -657,6 +645,14 @@ table.checks {
   border-bottom: 1px solid var(--line-strong);
   white-space: nowrap;
 }
+.board th {
+  font: 500 13px/1.2 var(--body);
+  color: var(--faint);
+  text-align: left;
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--line-strong);
+  white-space: nowrap;
+}
 .board td,
 .dtable td,
 .checks td {
@@ -664,20 +660,26 @@ table.checks {
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
+.board td {
+  padding: 12px 12px;
+}
 .board .n,
 .dtable .n {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.board td.n {
+  color: var(--muted);
+}
 .board .r {
-  width: 36px;
-  font: 700 16px var(--display);
+  width: 40px;
+  font: 600 17px var(--display);
   color: var(--faint);
 }
 .board .who {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .board .who a {
   color: var(--text);
@@ -692,18 +694,21 @@ table.checks {
 .board .meta,
 .dtable .pos {
   color: var(--faint);
-  font-size: 12px;
+  font-size: 13px;
 }
 .board .rating {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 .board .num {
-  min-width: 52px;
-  font: 700 20px/1 var(--display);
+  min-width: 56px;
+  font: 700 22px/1 var(--display);
   color: #fff;
   font-variant-numeric: tabular-nums;
+}
+.board .meter {
+  width: 200px;
 }
 .board tr.link-row {
   cursor: pointer;
@@ -712,7 +717,8 @@ table.checks {
   background: rgba(56, 189, 248, 0.05);
 }
 .board-page .caption {
-  margin-top: 16px;
+  margin-top: 14px;
+  font-size: 13px;
 }
 
 /* player: his card beside his reel, stacked on a narrow screen */
@@ -1103,6 +1109,18 @@ table.checks {
   .board-head h1,
   .how h1 {
     font-size: 38px;
+  }
+  /* the four tabs share the width */
+  .tabs {
+    display: flex;
+    width: 100%;
+  }
+  .tabs button {
+    flex: 1;
+    padding: 8px 4px;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-align: center;
   }
   /* the table fits a phone: rank, name, plays and the number; the bar and the position come back on wider screens */
   .board td,

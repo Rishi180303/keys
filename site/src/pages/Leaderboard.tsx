@@ -102,56 +102,44 @@ export default function Leaderboard() {
           </button>
         ))}
       </div>
+      {/* the filters read as a sentence of choices; each select names itself through its first option */}
       <div className="filters">
-        <label>
-          Coverage
-          <select value={filters.cov} onChange={(e) => set({ cov: e.target.value })}>
-            <option value="any">any</option>
-            <option value="man">man</option>
-            <option value="zone">zone</option>
-            {options.cov.map((c) => (
-              <option key={c} value={c}>
-                {label(c)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Route
-          <select value={filters.route} onChange={(e) => set({ route: e.target.value })}>
-            <option value="any">any</option>
-            {options.route.map((r) => (
-              <option key={r} value={r}>
-                {label(r)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Role
-          <select value={filters.role} onChange={(e) => set({ role: e.target.value })}>
-            <option value="any">any</option>
-            <option value="primary">primary</option>
-            <option value="help">help</option>
-          </select>
-        </label>
+        <select aria-label="coverage" value={filters.cov} onChange={(e) => set({ cov: e.target.value })}>
+          <option value="any">Any coverage</option>
+          <option value="man">Man</option>
+          <option value="zone">Zone</option>
+          {options.cov.map((c) => (
+            <option key={c} value={c}>
+              {label(c)}
+            </option>
+          ))}
+        </select>
+        <select aria-label="route" value={filters.route} onChange={(e) => set({ route: e.target.value })}>
+          <option value="any">Any route</option>
+          {options.route.map((r) => (
+            <option key={r} value={r}>
+              {label(r)}
+            </option>
+          ))}
+        </select>
+        <select aria-label="role" value={filters.role} onChange={(e) => set({ role: e.target.value })}>
+          <option value="any">Any role</option>
+          <option value="primary">Primary</option>
+          <option value="help">Help</option>
+        </select>
         {!teamView && (
-          <label>
-            Team
-            <select value={filters.team} onChange={(e) => set({ team: e.target.value })}>
-              <option value="any">any</option>
-              {options.team.map((t) => (
-                <option key={t} value={t}>
-                  {teamName(t)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <select aria-label="team" value={filters.team} onChange={(e) => set({ team: e.target.value })}>
+            <option value="any">Any team</option>
+            {options.team.map((t) => (
+              <option key={t} value={t}>
+                {teamName(t)}
+              </option>
+            ))}
+          </select>
         )}
-        <label>
-          At least
-          <input type="number" min={1} value={filters.minPlays} onChange={(e) => set({ minPlays: Math.max(1, Number(e.target.value) || 1) })} />
-          {teamView ? "defender plays" : "plays"}
+        <label className="min">
+          <input type="number" min={1} aria-label="minimum plays" value={filters.minPlays} onChange={(e) => set({ minPlays: Math.max(1, Number(e.target.value) || 1) })} />
+          {teamView ? "defender plays or more" : "plays or more"}
         </label>
       </div>
 
@@ -164,7 +152,7 @@ export default function Leaderboard() {
                 <tr>
                   <th className="r">#</th>
                   <th>Team</th>
-                  <th className="n">Defender plays</th>
+                  <th className="n">Plays</th>
                   <th>Rating</th>
                 </tr>
               </thead>
@@ -220,9 +208,7 @@ export default function Leaderboard() {
                         <Link to={`/player/${p.id}`} onClick={(e) => e.stopPropagation()}>
                           <b>{p.name}</b>
                         </Link>
-                        <span className="meta">
-                          {p.pos} {p.teams.map((t) => t.team).join(" ")}
-                        </span>
+                        <span className="meta">{p.teams.map((t) => t.team).join(" ")}</span>
                       </span>
                     </td>
                     <td className="n">{p.n}</td>
